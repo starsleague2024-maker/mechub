@@ -1,0 +1,462 @@
+/* ─────────────────────────────────────────────────────────────
+   Gestionale Officina — design system
+   Identità: strumento operativo da banco di lavoro.
+   Grafite + acciaio, accento giallo-cantiere (segnaletica officina),
+   mono per targhe/codici/tempi (dati che si leggono a colpo d'occhio).
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+	--grafite-900: #16181d;
+	--grafite-800: #1e2128;
+	--grafite-700: #282c35;
+	--grafite-600: #333844;
+	--grafite-500: #454b59;
+	--acciaio-400: #6b7280;
+	--acciaio-300: #9aa1ad;
+	--acciaio-200: #c8cdd6;
+	--acciaio-100: #e6e9ef;
+	--nebbia-50: #f4f6f9;
+	--carta: #ffffff;
+
+	--cantiere: #f5b301; /* giallo sollevatore */
+	--cantiere-scuro: #d99a00;
+	--cantiere-tenue: #fef3d0;
+
+	--verde: #2f9e5f;
+	--verde-tenue: #e2f4ea;
+	--ambra: #e08a00;
+	--ambra-tenue: #fbeecf;
+	--rosso: #d23b3b;
+	--rosso-tenue: #fbe4e4;
+	--blu: #3a6ea5;
+	--blu-tenue: #e4edf6;
+
+	--testo: var(--grafite-800);
+	--testo-tenue: var(--acciaio-400);
+	--bordo: var(--acciaio-100);
+	--bordo-forte: var(--acciaio-200);
+	--sfondo: var(--nebbia-50);
+	--pannello: var(--carta);
+
+	--display: 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif;
+	--corpo: 'Inter', system-ui, -apple-system, sans-serif;
+	--mono: 'JetBrains Mono', 'SF Mono', 'Roboto Mono', ui-monospace, monospace;
+
+	--r-sm: 4px;
+	--r: 7px;
+	--r-lg: 11px;
+	--ombra-sm: 0 1px 2px rgba(22, 24, 29, 0.06);
+	--ombra: 0 2px 8px rgba(22, 24, 29, 0.08);
+	--ombra-lg: 0 8px 30px rgba(22, 24, 29, 0.14);
+
+	--sidebar-w: 232px;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	-webkit-text-size-adjust: 100%;
+}
+
+body {
+	margin: 0;
+	font-family: var(--corpo);
+	font-size: 14px;
+	line-height: 1.5;
+	color: var(--testo);
+	background: var(--sfondo);
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+	font-family: var(--display);
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	margin: 0;
+	color: var(--grafite-900);
+}
+
+a {
+	color: inherit;
+	text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+	font-family: inherit;
+	font-size: inherit;
+	color: inherit;
+}
+
+.mono {
+	font-family: var(--mono);
+	font-variant-ligatures: none;
+}
+
+/* ── Eyebrow / etichette di sezione ── */
+.eyebrow {
+	font-family: var(--mono);
+	font-size: 11px;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--acciaio-400);
+}
+
+/* ── Pulsanti ── */
+.btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	padding: 8px 14px;
+	border: 1px solid var(--bordo-forte);
+	border-radius: var(--r);
+	background: var(--carta);
+	color: var(--testo);
+	font-weight: 500;
+	font-size: 13.5px;
+	cursor: pointer;
+	transition:
+		background 0.14s,
+		border-color 0.14s,
+		transform 0.05s;
+	white-space: nowrap;
+}
+.btn:hover {
+	background: var(--nebbia-50);
+	border-color: var(--acciaio-300);
+}
+.btn:active {
+	transform: translateY(1px);
+}
+.btn:focus-visible {
+	outline: 2px solid var(--blu);
+	outline-offset: 2px;
+}
+.btn-primary {
+	background: var(--grafite-800);
+	border-color: var(--grafite-800);
+	color: #fff;
+}
+.btn-primary:hover {
+	background: var(--grafite-700);
+	border-color: var(--grafite-700);
+}
+.btn-accent {
+	background: var(--cantiere);
+	border-color: var(--cantiere-scuro);
+	color: var(--grafite-900);
+	font-weight: 600;
+}
+.btn-accent:hover {
+	background: var(--cantiere-scuro);
+}
+.btn-ghost {
+	background: transparent;
+	border-color: transparent;
+}
+.btn-ghost:hover {
+	background: var(--acciaio-100);
+}
+.btn-danger {
+	color: var(--rosso);
+	border-color: var(--acciaio-200);
+}
+.btn-danger:hover {
+	background: var(--rosso-tenue);
+	border-color: var(--rosso);
+}
+.btn-sm {
+	padding: 5px 10px;
+	font-size: 12.5px;
+}
+.btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* ── Campi form ── */
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+.field label {
+	font-size: 12.5px;
+	font-weight: 600;
+	color: var(--grafite-600);
+}
+.input,
+.select,
+.textarea {
+	width: 100%;
+	padding: 8px 11px;
+	border: 1px solid var(--bordo-forte);
+	border-radius: var(--r);
+	background: var(--carta);
+	transition: border-color 0.14s, box-shadow 0.14s;
+}
+.input:focus,
+.select:focus,
+.textarea:focus {
+	outline: none;
+	border-color: var(--blu);
+	box-shadow: 0 0 0 3px var(--blu-tenue);
+}
+.textarea {
+	resize: vertical;
+	min-height: 72px;
+}
+.hint {
+	font-size: 12px;
+	color: var(--testo-tenue);
+}
+
+/* ── Pannelli / card ── */
+.panel {
+	background: var(--pannello);
+	border: 1px solid var(--bordo);
+	border-radius: var(--r-lg);
+	box-shadow: var(--ombra-sm);
+}
+.panel-pad {
+	padding: 20px;
+}
+
+/* ── Tabelle dati ── */
+.tabella-wrap {
+	overflow-x: auto;
+	border: 1px solid var(--bordo);
+	border-radius: var(--r-lg);
+	background: var(--carta);
+}
+table.dati {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 13.5px;
+}
+table.dati thead th {
+	text-align: left;
+	padding: 11px 14px;
+	background: var(--nebbia-50);
+	border-bottom: 1px solid var(--bordo-forte);
+	font-family: var(--mono);
+	font-size: 11px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--acciaio-400);
+	font-weight: 600;
+	white-space: nowrap;
+}
+table.dati tbody td {
+	padding: 11px 14px;
+	border-bottom: 1px solid var(--bordo);
+	vertical-align: middle;
+}
+table.dati tbody tr:last-child td {
+	border-bottom: none;
+}
+table.dati tbody tr {
+	transition: background 0.1s;
+}
+table.dati tbody tr:hover {
+	background: var(--nebbia-50);
+}
+table.dati a.riga-link {
+	font-weight: 600;
+	color: var(--grafite-900);
+}
+table.dati a.riga-link:hover {
+	color: var(--blu);
+}
+
+/* ── Badge di stato ── */
+.badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 3px 9px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.4;
+	white-space: nowrap;
+}
+.badge::before {
+	content: '';
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: currentColor;
+	opacity: 0.8;
+}
+.badge.neutro {
+	background: var(--acciaio-100);
+	color: var(--acciaio-400);
+}
+.badge.verde {
+	background: var(--verde-tenue);
+	color: #1c7a45;
+}
+.badge.ambra {
+	background: var(--ambra-tenue);
+	color: #9c6100;
+}
+.badge.rosso {
+	background: var(--rosso-tenue);
+	color: #a52626;
+}
+.badge.blu {
+	background: var(--blu-tenue);
+	color: #2c568a;
+}
+.badge.cantiere {
+	background: var(--cantiere-tenue);
+	color: #97690a;
+}
+
+/* ── Targa stile piastrina ── */
+.targa {
+	display: inline-block;
+	font-family: var(--mono);
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	background: var(--grafite-900);
+	color: #fff;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-size: 12.5px;
+	border: 1.5px solid var(--grafite-600);
+}
+
+/* ── Toolbar / header di pagina ── */
+.pagina-head {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 16px;
+	margin-bottom: 22px;
+	flex-wrap: wrap;
+}
+.pagina-titolo {
+	font-size: 26px;
+	line-height: 1.1;
+}
+
+/* ── Stato vuoto ── */
+.vuoto {
+	text-align: center;
+	padding: 56px 24px;
+	color: var(--testo-tenue);
+}
+.vuoto h3 {
+	color: var(--grafite-600);
+	margin-bottom: 6px;
+}
+
+/* ── Griglie ── */
+.griglia {
+	display: grid;
+	gap: 16px;
+}
+@media (min-width: 640px) {
+	.g-2 {
+		grid-template-columns: repeat(2, 1fr);
+	}
+	.g-3 {
+		grid-template-columns: repeat(3, 1fr);
+	}
+	.g-4 {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}
+
+/* ── Utilità ── */
+.flex {
+	display: flex;
+}
+.flex-col {
+	display: flex;
+	flex-direction: column;
+}
+.items-center {
+	align-items: center;
+}
+.justify-between {
+	justify-content: space-between;
+}
+.gap-1 {
+	gap: 6px;
+}
+.gap-2 {
+	gap: 12px;
+}
+.gap-3 {
+	gap: 18px;
+}
+.wrap {
+	flex-wrap: wrap;
+}
+.grow {
+	flex: 1;
+}
+.muted {
+	color: var(--testo-tenue);
+}
+.small {
+	font-size: 12.5px;
+}
+.text-right {
+	text-align: right;
+}
+.mt-1 {
+	margin-top: 8px;
+}
+.mt-2 {
+	margin-top: 16px;
+}
+.mt-3 {
+	margin-top: 24px;
+}
+.mb-2 {
+	margin-bottom: 16px;
+}
+
+/* ── Toast / avvisi ── */
+.avviso {
+	padding: 11px 15px;
+	border-radius: var(--r);
+	font-size: 13.5px;
+	border: 1px solid transparent;
+}
+.avviso.errore {
+	background: var(--rosso-tenue);
+	border-color: #f0b4b4;
+	color: #932020;
+}
+.avviso.ok {
+	background: var(--verde-tenue);
+	border-color: #b3ddc6;
+	color: #1c7a45;
+}
+.avviso.info {
+	background: var(--blu-tenue);
+	border-color: #b6cde3;
+	color: #2c568a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	* {
+		transition: none !important;
+		animation: none !important;
+	}
+}
