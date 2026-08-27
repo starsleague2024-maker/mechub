@@ -38,7 +38,7 @@
 			<tbody>
 				{#each data.persone as p}
 					<tr>
-						<td class="riga-link">{p.cognome} {p.nome}</td>
+						<td><a class="riga-link" href={`/organico/${p.id}`}>{p.cognome} {p.nome}</a></td>
 						<td class="small muted">{p.ruolo?.nome ?? '—'}</td>
 						<td class="small">
 							{#if p.email}<div>{p.email}</div>{/if}

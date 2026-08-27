@@ -1,14 +1,32 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import Vuoto from '$lib/components/Vuoto.svelte';
+	import Sezione from '$lib/components/Sezione.svelte';
+	import AlberoCompetenze from '$lib/components/AlberoCompetenze.svelte';
 
 	let { data, form } = $props();
 
-	// dopo la creazione officina, ricarica tutto (sidebar, dashboard…)
 	$effect(() => {
 		if (form?.ok) invalidateAll();
 	});
+
+	// competenze attive (flag `attiva`) come Set per l'albero
+	const attive = $derived(new Set(data.competenze.filter((c: any) => c.attiva).map((c: any) => c.id)));
+
+	// toggle competenza officina: invia il form nascosto via fetch (enhance manuale)
+	let formToggle = $state<HTMLFormElement | null>(null);
+	let toggleId = $state('');
+	let toggleAttiva = $state('true');
+
+	function onToggleCompetenza(id: string, nuovoStato: boolean) {
+		toggleId = id;
+		toggleAttiva = String(nuovoStato);
+		// invia al submit successivo
+		queueMicrotask(() => formToggle?.requestSubmit());
+	}
+
+	const competenzeAttiveCount = $derived(data.competenze.filter((c: any) => c.attiva).length);
+	const albeoVuoto = $derived(data.competenze.length === 0);
 </script>
 
 <svelte:head><title>Impostazioni · Gestionale Officina</title></svelte:head>
@@ -38,102 +56,112 @@
 		</form>
 	</div>
 {:else}
-	<div class="flex-col gap-3">
-		<!-- Dati officina -->
-		<section class="panel panel-pad">
-			<h2 class="mb-2">Officina</h2>
+	<!-- form nascosto per il toggle competenza officina -->
+	<form
+		method="POST"
+		action="?/toggleCompetenza"
+		use:enhance
+		bind:this={formToggle}
+		class="hidden-form"
+	>
+		<input type="hidden" name="id" value={toggleId} />
+		<input type="hidden" name="attiva" value={toggleAttiva} />
+	</form>
+
+	<div class="sezioni">
+		<!-- ─── Dati officina ─── -->
+		<Sezione titolo="Officina" descrizione="Nome e indirizzo" aperta={true}>
 			<form method="POST" action="?/aggiornaOfficina" use:enhance class="flex-col gap-2" style="max-width:480px">
 				<input type="hidden" name="id" value={data.officina.id} />
 				<div class="field"><label for="no">Nome</label><input id="no" class="input" name="nome" value={data.officina.nome} /></div>
 				<div class="field"><label for="in">Indirizzo</label><input id="in" class="input" name="indirizzo" value={data.officina.indirizzo ?? ''} /></div>
 				<div><button class="btn btn-accent" type="submit">Salva</button></div>
 			</form>
-		</section>
+		</Sezione>
 
-		<div class="griglia g-2 align-start">
-			<!-- Categorie veicolo -->
-			<section class="panel">
-				<header class="sez-head"><h2>Categorie veicolo</h2></header>
-				<div class="panel-pad">
-					{#if data.categorie.length === 0}
-						<p class="muted small mb-2">Nessuna categoria. Servono per classificare i veicoli.</p>
-					{:else}
-						<div class="chips mb-2">
-							{#each data.categorie as c}
-								<span class="chip-el">
-									{c.nome}
-									<form method="POST" action="?/scollegaCategoria" use:enhance class="inline-x">
-										<input type="hidden" name="officina_id" value={data.officina.id} />
-										<input type="hidden" name="categoria_id" value={c.id} />
-										<button type="submit" aria-label="Rimuovi">×</button>
-									</form>
-								</span>
-							{/each}
-						</div>
-					{/if}
-					<form method="POST" action="?/creaCategoria" use:enhance class="flex gap-1">
-						<input type="hidden" name="officina_id" value={data.officina.id} />
-						<input class="input" name="nome" placeholder="Es. Auto, Moto, Furgone" required />
-						<button class="btn btn-accent" type="submit">+</button>
-					</form>
+		<!-- ─── Veicoli trattati ─── -->
+		<Sezione titolo="Veicoli trattati" descrizione="Categorie di veicolo" badge={data.categorie.length}>
+			<p class="muted small mb-2">Le categorie di veicolo che l'officina tratta. Utile al Planner per assegnare le risorse giuste.</p>
+			{#if data.categorie.length > 0}
+				<div class="chips mb-2">
+					{#each data.categorie as c}
+						<span class="chip-el">
+							{c.nome}
+							<form method="POST" action="?/scollegaCategoria" use:enhance class="inline-x">
+								<input type="hidden" name="officina_id" value={data.officina.id} />
+								<input type="hidden" name="categoria_id" value={c.id} />
+								<button type="submit" aria-label="Rimuovi">×</button>
+							</form>
+						</span>
+					{/each}
 				</div>
-			</section>
+			{/if}
+			<form method="POST" action="?/creaCategoria" use:enhance class="flex gap-1">
+				<input type="hidden" name="officina_id" value={data.officina.id} />
+				<input class="input" name="nome" placeholder="Es. Auto, Moto, Furgone, Camper" required />
+				<button class="btn btn-accent" type="submit">+</button>
+			</form>
+		</Sezione>
 
-			<!-- Ruoli -->
-			<section class="panel">
-				<header class="sez-head"><h2>Ruoli</h2></header>
-				<div class="panel-pad">
-					{#if data.ruoli.length === 0}
-						<p class="muted small mb-2">Nessun ruolo definito.</p>
-					{:else}
-						<ul class="lista-el mb-2">
-							{#each data.ruoli as r}
-								<li>
-									<span>{r.nome}</span>
-									<form method="POST" action="?/eliminaRuolo" use:enhance class="inline-x">
-										<input type="hidden" name="id" value={r.id} />
-										<button type="submit" aria-label="Elimina">×</button>
-									</form>
-								</li>
-							{/each}
-						</ul>
-					{/if}
-					<form method="POST" action="?/creaRuolo" use:enhance class="flex gap-1">
-						<input type="hidden" name="officina_id" value={data.officina.id} />
-						<input class="input" name="nome" placeholder="Es. Meccanico, Capofficina" required />
-						<button class="btn btn-accent" type="submit">+</button>
-					</form>
-				</div>
-			</section>
-		</div>
-
-		<!-- Competenze -->
-		<section class="panel">
-			<header class="sez-head"><h2>Competenze</h2></header>
-			<div class="panel-pad">
-				{#if data.competenze.length === 0}
-					<p class="muted small mb-2">Nessuna competenza. Catalogo unico, riutilizzabile tra le categorie veicolo.</p>
-				{:else}
-					<div class="chips mb-2">
-						{#each data.competenze as c}
-							<span class="chip-el">
-								{c.nome}{#if c.famiglia}<span class="muted small"> · {c.famiglia}</span>{/if}
-								<form method="POST" action="?/eliminaCompetenza" use:enhance class="inline-x">
-									<input type="hidden" name="id" value={c.id} />
-									<button type="submit" aria-label="Elimina">×</button>
-								</form>
-							</span>
-						{/each}
-					</div>
-				{/if}
-				<form method="POST" action="?/creaCompetenza" use:enhance class="flex gap-1 wrap">
-					<input type="hidden" name="officina_id" value={data.officina.id} />
-					<input class="input" name="nome" placeholder="Es. Diagnosi elettronica" required style="flex:1;min-width:180px" />
-					<input class="input" name="famiglia" placeholder="Famiglia (es. elettrica)" style="flex:1;min-width:140px" />
-					<button class="btn btn-accent" type="submit">Aggiungi</button>
-				</form>
+		<!-- ─── Alimentazioni trattate (predisposta, Blocco 2) ─── -->
+		<Sezione titolo="Alimentazioni trattate" descrizione="Benzina, diesel, GPL…">
+			<div class="avviso info small">
+				Questa sezione sarà completata nel prossimo blocco. Permetterà di dichiarare quali
+				alimentazioni l'officina tratta (benzina, diesel, GPL, metano, ibrido, elettrico, idrogeno)
+				e di avvisare quando entra un veicolo non trattato.
 			</div>
-		</section>
+		</Sezione>
+
+		<!-- ─── Competenze officina (ALBERO) ─── -->
+		<Sezione titolo="Competenze e lavorazioni dell'officina" descrizione="Cosa fa questa officina" badge={competenzeAttiveCount} aperta={true}>
+			<p class="muted small mb-2">
+				Spunta le competenze che l'officina è in grado di offrire. Le macro-aree (in grassetto)
+				sono contenitori: attiva le competenze specifiche al loro interno. La stessa struttura
+				sarà usata per lo staff e per le lavorazioni.
+			</p>
+			{#if albeoVuoto}
+				<div class="avviso info mb-2">
+					L'albero delle competenze non è ancora stato generato per questa officina.
+					<form method="POST" action="?/generaAlbero" use:enhance class="mt-1">
+						<input type="hidden" name="officina_id" value={data.officina.id} />
+						<button class="btn btn-accent btn-sm" type="submit">Genera albero competenze</button>
+					</form>
+				</div>
+			{:else}
+				<AlberoCompetenze competenze={data.competenze} {attive} ontoggle={onToggleCompetenza} />
+			{/if}
+		</Sezione>
+
+		<!-- ─── Ruoli ─── -->
+		<Sezione titolo="Ruoli" descrizione="Ruoli del personale" badge={data.ruoli.length}>
+			{#if data.ruoli.length > 0}
+				<ul class="lista-el mb-2">
+					{#each data.ruoli as r}
+						<li>
+							<span>{r.nome}</span>
+							<form method="POST" action="?/eliminaRuolo" use:enhance class="inline-x">
+								<input type="hidden" name="id" value={r.id} />
+								<button type="submit" aria-label="Elimina">×</button>
+							</form>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+			<form method="POST" action="?/creaRuolo" use:enhance class="flex gap-1">
+				<input type="hidden" name="officina_id" value={data.officina.id} />
+				<input class="input" name="nome" placeholder="Es. Meccanico, Capofficina" required />
+				<button class="btn btn-accent" type="submit">+</button>
+			</form>
+		</Sezione>
+
+		<!-- ─── Certificazioni e abilitazioni (predisposta, Blocco 3) ─── -->
+		<Sezione titolo="Certificazioni e abilitazioni" descrizione="Blocco successivo">
+			<div class="avviso info small">
+				La gestione completa di certificazioni e abilitazioni (F-gas, PES/PAV, GPL/metano, ganci
+				traino) arriverà in un blocco dedicato. Una competenza indica cosa una persona sa fare;
+				un'abilitazione indica cosa è autorizzata a fare legalmente.
+			</div>
+		</Sezione>
 	</div>
 {/if}
 
@@ -141,15 +169,14 @@
 	.setup {
 		max-width: 640px;
 	}
-	.align-start {
-		align-items: start;
+	.sezioni {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		max-width: 900px;
 	}
-	.sez-head {
-		padding: 14px 18px;
-		border-bottom: 1px solid var(--bordo);
-	}
-	.sez-head h2 {
-		font-size: 16px;
+	.hidden-form {
+		display: none;
 	}
 	.chips {
 		display: flex;

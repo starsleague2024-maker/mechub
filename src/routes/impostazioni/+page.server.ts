@@ -7,30 +7,39 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 
 	let officinaFull = null;
 	let categorie: any[] = [];
+	let tutteCategorie: any[] = [];
 	let ruoli: any[] = [];
 	let competenze: any[] = [];
 
 	if (officina) {
-		const [o, cat, ru, co] = await Promise.all([
+		const [o, cat, tuttecat, ru, co] = await Promise.all([
 			sb.from('officine').select('*').eq('id', officina.id).maybeSingle(),
 			sb
 				.from('officina_categorie_veicolo')
 				.select('categoria:categorie_veicolo(id, nome)')
 				.eq('officina_id', officina.id),
+			sb.from('categorie_veicolo').select('id, nome').order('nome'),
 			sb.from('ruoli').select('id, nome, descrizione').eq('officina_id', officina.id).order('nome'),
 			sb
 				.from('competenze')
-				.select('id, nome, famiglia')
+				.select('id, nome, famiglia, competenza_padre_id, selezionabile, ordine, attiva')
 				.eq('officina_id', officina.id)
-				.order('nome')
+				.order('ordine', { ascending: true, nullsFirst: false })
 		]);
 		officinaFull = o.data;
 		categorie = (cat.data ?? []).map((r: any) => r.categoria).filter(Boolean);
+		tutteCategorie = tuttecat.data ?? [];
 		ruoli = ru.data ?? [];
 		competenze = co.data ?? [];
 	}
 
-	return { officina: officinaFull, categorie, ruoli, competenze };
+	return {
+		officina: officinaFull,
+		categorie,
+		tutteCategorie,
+		ruoli,
+		competenze: competenze as any[]
+	};
 };
 
 export const actions: Actions = {
@@ -149,6 +158,32 @@ export const actions: Actions = {
 			.from('competenze')
 			.delete()
 			.eq('id', f.get('id') as string);
+		if (error) return fail(400, { errore: error.message });
+		return { ok: true };
+	},
+
+	// Attiva/disattiva una competenza offerta dall'officina (flag `attiva`).
+	toggleCompetenza: async ({ request, locals }) => {
+		const f = await request.formData();
+		const id = f.get('id') as string;
+		const attiva = f.get('attiva') === 'true';
+		const { error } = await locals.supabase
+			.from('competenze')
+			.update({ attiva })
+			.eq('id', id);
+		if (error) return fail(400, { errore: error.message });
+		return { ok: true };
+	},
+
+	// Genera l'albero competenze iniziale per l'officina (idempotente lato DB).
+	// Utile se l'officina è stata creata prima di questa migration.
+	generaAlbero: async ({ request, locals }) => {
+		const f = await request.formData();
+		const officinaId = f.get('officina_id') as string;
+		if (!officinaId) return fail(400, { errore: 'Nessuna officina.' });
+		const { error } = await locals.supabase.rpc('seed_albero_competenze', {
+			p_officina: officinaId
+		});
 		if (error) return fail(400, { errore: error.message });
 		return { ok: true };
 	}
