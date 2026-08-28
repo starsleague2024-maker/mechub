@@ -103,6 +103,40 @@ export const CATEGORIA_SOSPENSIONE: Record<string, string> = {
 	altro: 'Altro'
 };
 
+// Stato di una certificazione, CALCOLATO dalla data di scadenza (mai memorizzato).
+// Rispecchia la funzione SQL stato_certificazione(). I giorni di preavviso
+// ("in prossimità") non sono qui: arriveranno col blocco reminder.
+export const STATO_CERTIFICAZIONE: Record<string, Voce> = {
+	valida: { label: 'Valida', colore: 'verde' },
+	scaduta: { label: 'Scaduta', colore: 'rosso' },
+	senza_scadenza: { label: 'Senza scadenza', colore: 'neutro' },
+	revocata: { label: 'Revocata', colore: 'rosso' },
+	sospesa: { label: 'Sospesa', colore: 'ambra' }
+};
+
+// Tipi di certificazione/abilitazione. PES e PAV sono resi individuabili con
+// un colore dedicato. Elenco non esaustivo: `tipo` accetta anche testo libero.
+export const TIPO_CERTIFICAZIONE: Record<string, Voce> = {
+	PES: { label: 'PES — Persona Esperta', colore: 'cantiere' },
+	PAV: { label: 'PAV — Persona Avvertita', colore: 'cantiere' },
+	patentino: { label: 'Patentino', colore: 'blu' },
+	abilitazione: { label: 'Abilitazione', colore: 'blu' },
+	certificazione: { label: 'Certificazione tecnica', colore: 'neutro' }
+};
+
+// Stato certificazione calcolato lato client (specchio della funzione SQL).
+// Precedenza allo stato manuale se presente (es. 'revocata').
+export function statoCertificazione(
+	dataScadenza: string | null | undefined,
+	statoManuale?: string | null
+): string {
+	if (statoManuale) return statoManuale;
+	if (!dataScadenza) return 'senza_scadenza';
+	const oggi = new Date();
+	oggi.setHours(0, 0, 0, 0);
+	return new Date(dataScadenza) < oggi ? 'scaduta' : 'valida';
+}
+
 export function voce(mappa: Record<string, Voce>, chiave: string | null | undefined): Voce {
 	if (!chiave) return { label: '—', colore: 'neutro' };
 	return mappa[chiave] ?? { label: chiave, colore: 'neutro' };
