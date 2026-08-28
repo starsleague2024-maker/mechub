@@ -72,6 +72,23 @@ export const STATO_ORDINE: Record<string, Voce> = {
 	in_ritardo: { label: 'In ritardo', colore: 'rosso' }
 };
 
+// Alimentazioni standard trattabili da un'officina. L'ordine di questa
+// lista è quello mostrato in Impostazioni e nei form veicolo.
+// Le chiavi coincidono con il CHECK di `veicoli.alimentazione` e
+// `officina_alimentazioni.alimentazione` (migration 0018).
+export const ALIMENTAZIONE: Record<string, Voce> = {
+	benzina: { label: 'Benzina', colore: 'ambra' },
+	diesel: { label: 'Diesel', colore: 'neutro' },
+	gpl: { label: 'GPL', colore: 'blu' },
+	metano: { label: 'Metano', colore: 'blu' },
+	ibrido: { label: 'Ibrido', colore: 'verde' },
+	elettrico: { label: 'Elettrico', colore: 'verde' },
+	idrogeno: { label: 'Idrogeno', colore: 'cantiere' }
+};
+
+// Ordine canonico delle 7 alimentazioni (utile come fallback UI).
+export const ALIMENTAZIONI: string[] = Object.keys(ALIMENTAZIONE);
+
 export const MODALITA_OPERATIVA: Record<string, string> = {
 	da_finire_senza_fermarsi: 'Da finire senza fermarsi',
 	lasciabile: 'Può essere lasciato e ripreso'

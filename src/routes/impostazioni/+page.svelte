@@ -3,12 +3,42 @@
 	import { invalidateAll } from '$app/navigation';
 	import Sezione from '$lib/components/Sezione.svelte';
 	import AlberoCompetenze from '$lib/components/AlberoCompetenze.svelte';
+	import { ALIMENTAZIONE, ALIMENTAZIONI } from '$lib/dominio';
 
 	let { data, form } = $props();
 
 	$effect(() => {
 		if (form?.ok) invalidateAll();
 	});
+
+	// Le 7 alimentazioni, in ordine canonico, unite allo stato dal DB.
+	// Il seed automatico (trigger + backfill, migration 0018) garantisce che
+	// le righe esistano sempre; il fallback copre solo casi anomali, senza
+	// alcun pulsante di generazione manuale.
+	const alimentazioni = $derived(
+		ALIMENTAZIONI.map((chiave) => {
+			const riga = data.alimentazioni.find((a: any) => a.alimentazione === chiave);
+			return {
+				chiave,
+				label: ALIMENTAZIONE[chiave].label,
+				id: riga?.id ?? null,
+				attiva: riga?.attiva ?? false
+			};
+		})
+	);
+	const alimentazioniAttiveCount = $derived(alimentazioni.filter((a) => a.attiva).length);
+
+	// toggle alimentazione: stesso pattern del form nascosto usato per le competenze
+	let formToggleAlim = $state<HTMLFormElement | null>(null);
+	let alimId = $state('');
+	let alimAttiva = $state('true');
+
+	function onToggleAlimentazione(id: string, nuovoStato: boolean) {
+		if (!id) return;
+		alimId = id;
+		alimAttiva = String(nuovoStato);
+		queueMicrotask(() => formToggleAlim?.requestSubmit());
+	}
 
 	// competenze attive (flag `attiva`) come Set per l'albero
 	const attive = $derived(new Set(data.competenze.filter((c: any) => c.attiva).map((c: any) => c.id)));
@@ -68,6 +98,18 @@
 		<input type="hidden" name="attiva" value={toggleAttiva} />
 	</form>
 
+	<!-- form nascosto per il toggle alimentazione officina -->
+	<form
+		method="POST"
+		action="?/toggleAlimentazione"
+		use:enhance
+		bind:this={formToggleAlim}
+		class="hidden-form"
+	>
+		<input type="hidden" name="id" value={alimId} />
+		<input type="hidden" name="attiva" value={alimAttiva} />
+	</form>
+
 	<div class="sezioni">
 		<!-- ─── Dati officina ─── -->
 		<Sezione titolo="Officina" descrizione="Nome e indirizzo" aperta={true}>
@@ -103,13 +145,32 @@
 			</form>
 		</Sezione>
 
-		<!-- ─── Alimentazioni trattate (predisposta, Blocco 2) ─── -->
-		<Sezione titolo="Alimentazioni trattate" descrizione="Benzina, diesel, GPL…">
-			<div class="avviso info small">
-				Questa sezione sarà completata nel prossimo blocco. Permetterà di dichiarare quali
-				alimentazioni l'officina tratta (benzina, diesel, GPL, metano, ibrido, elettrico, idrogeno)
-				e di avvisare quando entra un veicolo non trattato.
-			</div>
+		<!-- ─── Alimentazioni trattate ─── -->
+		<Sezione
+			titolo="Alimentazioni trattate"
+			descrizione="Cosa sa gestire l'officina"
+			badge={alimentazioniAttiveCount}
+		>
+			<p class="muted small mb-2">
+				Indica quali alimentazioni l'officina è in grado di gestire. Quando entra un veicolo con
+				un'alimentazione non attiva, il desk riceve un avviso; il salvataggio resta comunque possibile.
+			</p>
+			<ul class="alim-lista">
+				{#each alimentazioni as a}
+					<li>
+						<label class="alim-riga">
+							<input
+								type="checkbox"
+								checked={a.attiva}
+								disabled={!a.id}
+								onchange={(e) => onToggleAlimentazione(a.id, e.currentTarget.checked)}
+							/>
+							<span class="alim-nome">{a.label}</span>
+							<span class="alim-stato" class:on={a.attiva}>{a.attiva ? 'Attiva' : 'Non attiva'}</span>
+						</label>
+					</li>
+				{/each}
+			</ul>
 		</Sezione>
 
 		<!-- ─── Competenze officina (ALBERO) ─── -->
@@ -225,5 +286,45 @@
 	}
 	.inline-x button:hover {
 		color: var(--rosso);
+	}
+	.alim-lista {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		max-width: 420px;
+	}
+	.alim-riga {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 9px 12px;
+		background: var(--nebbia-50);
+		border-radius: var(--r);
+		cursor: pointer;
+	}
+	.alim-riga:hover {
+		background: var(--acciaio-100);
+	}
+	.alim-riga input {
+		accent-color: var(--cantiere);
+		width: 16px;
+		height: 16px;
+		cursor: pointer;
+	}
+	.alim-nome {
+		font-weight: 500;
+		font-size: 14px;
+	}
+	.alim-stato {
+		margin-left: auto;
+		font-size: 12px;
+		font-weight: 600;
+		color: var(--testo-tenue);
+	}
+	.alim-stato.on {
+		color: var(--verde);
 	}
 </style>

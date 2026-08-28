@@ -13,7 +13,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
 	if (!veicolo) throw error(404, 'Veicolo non trovato');
 
-	const [{ data: categorie }, { data: interventi }, { data: fabbisogni }] = await Promise.all([
+	const [{ data: categorie }, { data: interventi }, { data: fabbisogni }, { data: alim }] =
+		await Promise.all([
 		sb.from('categorie_veicolo').select('id, nome').order('nome'),
 		sb
 			.from('interventi')
@@ -24,14 +25,22 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			.from('fabbisogni_ricambio')
 			.select('id, quantita_richiesta, stato_fabbisogno, ricambio:catalogo_ricambi(codice, descrizione)')
 			.eq('veicolo_id', params.id)
-			.order('created_at', { ascending: false })
+			.order('created_at', { ascending: false }),
+		sb.from('officina_alimentazioni').select('alimentazione, attiva')
 	]);
+
+	// Alimentazioni che l'officina tratta (attive). Serve al form per l'avviso
+	// "alimentazione non trattata". La RLS restituisce già solo la propria officina.
+	const alimentazioniTrattate = (alim ?? [])
+		.filter((a: any) => a.attiva)
+		.map((a: any) => a.alimentazione);
 
 	return {
 		veicolo,
 		categorie: categorie ?? [] as any[],
 		interventi: interventi ?? [] as any[],
-		fabbisogni: fabbisogni ?? [] as any[]
+		fabbisogni: fabbisogni ?? [] as any[],
+		alimentazioniTrattate
 	};
 };
 
@@ -47,7 +56,8 @@ export const actions: Actions = {
 				modello: (f.get('modello') as string)?.trim() || null,
 				telaio: (f.get('telaio') as string)?.trim() || null,
 				anno: f.get('anno') ? Number(f.get('anno')) : null,
-				km: f.get('km') ? Number(f.get('km')) : null
+				km: f.get('km') ? Number(f.get('km')) : null,
+				alimentazione: (f.get('alimentazione') as string) || null
 			})
 			.eq('id', params.id);
 		if (e) return fail(400, { errore: e.message });

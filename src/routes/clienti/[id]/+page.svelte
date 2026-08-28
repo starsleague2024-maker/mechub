@@ -3,16 +3,22 @@
 	import Modal from '$lib/components/Modal.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import Vuoto from '$lib/components/Vuoto.svelte';
-	import { STATO_INTERVENTO, voce, fmtData } from '$lib/dominio';
+	import { STATO_INTERVENTO, ALIMENTAZIONE, ALIMENTAZIONI, voce, fmtData } from '$lib/dominio';
 
 	let { data, form } = $props();
 	let modalVeicolo = $state(false);
 	let modifica = $state(false);
+	// Alimentazione scelta nella modale nuovo veicolo (per l'avviso live).
+	let nuovaAlim = $state('');
 
 	$effect(() => {
 		if (form?.ok && !form?.salvato) modalVeicolo = false;
 		if (form?.salvato) modifica = false;
 	});
+
+	const alimNonTrattata = $derived(
+		!!nuovaAlim && !data.alimentazioniTrattate.includes(nuovaAlim)
+	);
 
 	const c = $derived(data.cliente);
 	const nomeVisual = $derived(c.ragione_sociale || `${c.nome} ${c.cognome ?? ''}`);
@@ -141,6 +147,19 @@
 			<div class="field"><label for="km">Km</label><input id="km" class="input mono" name="km" type="number" min="0" /></div>
 			<div class="field"><label for="te">Telaio</label><input id="te" class="input mono" name="telaio" /></div>
 		</div>
+		<div class="field" style="max-width:220px">
+			<label for="al">Alimentazione</label>
+			<select id="al" class="select" name="alimentazione" bind:value={nuovaAlim}>
+				<option value="">— non indicata —</option>
+				{#each ALIMENTAZIONI as chiave}<option value={chiave}>{ALIMENTAZIONE[chiave].label}</option>{/each}
+			</select>
+		</div>
+		{#if alimNonTrattata}
+			<div class="avviso ambra small">
+				⚠️ Questa officina non ha indicato <strong>{ALIMENTAZIONE[nuovaAlim]?.label ?? nuovaAlim}</strong>
+				tra le alimentazioni trattate. Puoi salvare comunque.
+			</div>
+		{/if}
 		{#if data.categorie.length === 0}
 			<div class="avviso info small">Nessuna categoria veicolo definita. Creane in <a href="/impostazioni">Impostazioni</a>.</div>
 		{/if}

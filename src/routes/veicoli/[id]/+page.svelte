@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import Badge from '$lib/components/Badge.svelte';
 	import Vuoto from '$lib/components/Vuoto.svelte';
-	import { STATO_INTERVENTO, STATO_FABBISOGNO, voce, fmtData } from '$lib/dominio';
+	import { STATO_INTERVENTO, STATO_FABBISOGNO, ALIMENTAZIONE, ALIMENTAZIONI, voce, fmtData } from '$lib/dominio';
 
 	let { data, form } = $props();
 	let modifica = $state(false);
@@ -14,6 +14,16 @@
 	const v = $derived(data.veicolo);
 	const cli = $derived(v.cliente);
 	const nomeCli = $derived(cli?.ragione_sociale || `${cli?.nome} ${cli?.cognome ?? ''}`);
+
+	// Alimentazione selezionata nel form (per l'avviso live). Inizializzata dal veicolo.
+	let alimSel = $state<string>('');
+	$effect(() => {
+		if (modifica) alimSel = v.alimentazione ?? '';
+	});
+	// Avviso non-bloccante: l'alimentazione scelta non è tra quelle trattate dall'officina.
+	const alimNonTrattata = $derived(
+		!!alimSel && !data.alimentazioniTrattate.includes(alimSel)
+	);
 </script>
 
 <svelte:head><title>{v.targa} · Veicoli</title></svelte:head>
@@ -62,16 +72,44 @@
 						<div class="field"><label for="km">Km</label><input id="km" class="input mono" type="number" name="km" value={v.km ?? ''} /></div>
 						<div class="field"><label for="te">Telaio</label><input id="te" class="input mono" name="telaio" value={v.telaio ?? ''} /></div>
 					</div>
+					<div class="field" style="max-width:220px">
+						<label for="al">Alimentazione</label>
+						<select id="al" class="select" name="alimentazione" bind:value={alimSel}>
+							<option value="">— non indicata —</option>
+							{#each ALIMENTAZIONI as chiave}<option value={chiave}>{ALIMENTAZIONE[chiave].label}</option>{/each}
+						</select>
+					</div>
+					{#if alimNonTrattata}
+						<div class="avviso ambra small">
+							⚠️ Questa officina non ha indicato <strong>{ALIMENTAZIONE[alimSel]?.label ?? alimSel}</strong>
+							tra le alimentazioni trattate. Puoi salvare comunque.
+						</div>
+					{/if}
 					<div><button class="btn btn-accent" type="submit">Salva</button></div>
 				</form>
 			{:else}
 				<dl class="scheda">
 					<div><dt>Cliente</dt><dd><a class="link" href={`/clienti/${cli?.id}`}>{nomeCli}</a></dd></div>
 					<div><dt>Categoria</dt><dd>{v.categoria?.nome ?? '—'}</dd></div>
+					<div>
+						<dt>Alimentazione</dt>
+						<dd>
+							{v.alimentazione ? (ALIMENTAZIONE[v.alimentazione]?.label ?? v.alimentazione) : '—'}
+							{#if v.alimentazione && !data.alimentazioniTrattate.includes(v.alimentazione)}
+								<span class="alim-flag" title="Alimentazione non trattata dall'officina">⚠️</span>
+							{/if}
+						</dd>
+					</div>
 					<div><dt>Anno</dt><dd class="mono">{v.anno ?? '—'}</dd></div>
 					<div><dt>Km</dt><dd class="mono">{v.km ? v.km.toLocaleString('it-IT') : '—'}</dd></div>
 					<div><dt>Telaio</dt><dd class="mono">{v.telaio ?? '—'}</dd></div>
 				</dl>
+				{#if v.alimentazione && !data.alimentazioniTrattate.includes(v.alimentazione)}
+					<div class="avviso ambra small mt-2">
+						⚠️ Questa officina non ha indicato <strong>{ALIMENTAZIONE[v.alimentazione]?.label ?? v.alimentazione}</strong>
+						tra le alimentazioni trattate.
+					</div>
+				{/if}
 			{/if}
 		</section>
 
@@ -191,5 +229,9 @@
 	}
 	.storico-motivo {
 		font-weight: 500;
+	}
+	.alim-flag {
+		margin-left: 4px;
+		font-size: 13px;
 	}
 </style>

@@ -453,6 +453,11 @@ table.dati a.riga-link:hover {
 	border-color: #b6cde3;
 	color: #2c568a;
 }
+.avviso.ambra {
+	background: var(--cantiere-tenue);
+	border-color: #f0d38a;
+	color: #97690a;
+}
 
 @media (prefers-reduced-motion: reduce) {
 	* {

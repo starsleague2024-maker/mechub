@@ -10,9 +10,10 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 	let tutteCategorie: any[] = [];
 	let ruoli: any[] = [];
 	let competenze: any[] = [];
+	let alimentazioni: any[] = [];
 
 	if (officina) {
-		const [o, cat, tuttecat, ru, co] = await Promise.all([
+		const [o, cat, tuttecat, ru, co, al] = await Promise.all([
 			sb.from('officine').select('*').eq('id', officina.id).maybeSingle(),
 			sb
 				.from('officina_categorie_veicolo')
@@ -24,13 +25,18 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 				.from('competenze')
 				.select('id, nome, famiglia, competenza_padre_id, selezionabile, ordine, attiva')
 				.eq('officina_id', officina.id)
-				.order('ordine', { ascending: true, nullsFirst: false })
+				.order('ordine', { ascending: true, nullsFirst: false }),
+			sb
+				.from('officina_alimentazioni')
+				.select('id, alimentazione, attiva')
+				.eq('officina_id', officina.id)
 		]);
 		officinaFull = o.data;
 		categorie = (cat.data ?? []).map((r: any) => r.categoria).filter(Boolean);
 		tutteCategorie = tuttecat.data ?? [];
 		ruoli = ru.data ?? [];
 		competenze = co.data ?? [];
+		alimentazioni = al.data ?? [];
 	}
 
 	return {
@@ -38,7 +44,8 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 		categorie,
 		tutteCategorie,
 		ruoli,
-		competenze: competenze as any[]
+		competenze: competenze as any[],
+		alimentazioni: alimentazioni as any[]
 	};
 };
 
@@ -169,6 +176,21 @@ export const actions: Actions = {
 		const attiva = f.get('attiva') === 'true';
 		const { error } = await locals.supabase
 			.from('competenze')
+			.update({ attiva })
+			.eq('id', id);
+		if (error) return fail(400, { errore: error.message });
+		return { ok: true };
+	},
+
+	// Attiva/disattiva un'alimentazione trattata dall'officina (flag `attiva`).
+	// Le 7 righe esistono già (seed automatico via trigger/backfill): qui si
+	// aggiorna solo lo stato. La RLS garantisce che si tocchi la propria officina.
+	toggleAlimentazione: async ({ request, locals }) => {
+		const f = await request.formData();
+		const id = f.get('id') as string;
+		const attiva = f.get('attiva') === 'true';
+		const { error } = await locals.supabase
+			.from('officina_alimentazioni')
 			.update({ attiva })
 			.eq('id', id);
 		if (error) return fail(400, { errore: error.message });

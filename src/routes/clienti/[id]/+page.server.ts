@@ -11,10 +11,11 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
 	if (!cliente) throw error(404, 'Cliente non trovato');
 
-	const [{ data: veicoli }, { data: categorie }, { data: interventi }] = await Promise.all([
+	const [{ data: veicoli }, { data: categorie }, { data: interventi }, { data: alim }] =
+		await Promise.all([
 		sb
 			.from('veicoli')
-			.select('id, targa, marca, modello, anno, km, categoria:categorie_veicolo(nome)')
+			.select('id, targa, marca, modello, anno, km, alimentazione, categoria:categorie_veicolo(nome)')
 			.eq('cliente_id', params.id)
 			.order('created_at', { ascending: false }),
 		sb.from('categorie_veicolo').select('id, nome').order('nome'),
@@ -23,14 +24,20 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			.select('id, motivo_iniziale, stato_generale, data_apertura, veicolo:veicoli(targa)')
 			.eq('cliente_id', params.id)
 			.order('data_apertura', { ascending: false })
-			.limit(20)
+			.limit(20),
+		sb.from('officina_alimentazioni').select('alimentazione, attiva')
 	]);
+
+	const alimentazioniTrattate = (alim ?? [])
+		.filter((a: any) => a.attiva)
+		.map((a: any) => a.alimentazione);
 
 	return {
 		cliente,
 		veicoli: veicoli ?? [] as any[],
 		categorie: categorie ?? [] as any[],
-		interventi: interventi ?? [] as any[]
+		interventi: interventi ?? [] as any[],
+		alimentazioniTrattate
 	};
 };
 
@@ -70,7 +77,8 @@ export const actions: Actions = {
 			marca: (f.get('marca') as string)?.trim() || null,
 			modello: (f.get('modello') as string)?.trim() || null,
 			anno,
-			km
+			km,
+			alimentazione: (f.get('alimentazione') as string) || null
 		});
 		if (e) return fail(400, { errore: e.message });
 		return { ok: true };
