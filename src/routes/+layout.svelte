@@ -33,7 +33,6 @@
 		{ gruppo: 'Anagrafiche', voci: [
 			{ href: '/clienti', label: 'Clienti', icona: '◔' },
 			{ href: '/veicoli', label: 'Veicoli', icona: '⬒' },
-			{ href: '/organico', label: 'Organico', icona: '◑' },
 			{ href: '/postazioni', label: 'Postazioni', icona: '▨' },
 			{ href: '/catalogo', label: 'Catalogo lavorazioni', icona: '☰' }
 		]},

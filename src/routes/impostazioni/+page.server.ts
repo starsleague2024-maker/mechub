@@ -98,6 +98,34 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 };
 
 export const actions: Actions = {
+	// Salva gli orari di apertura dell'officina (campo JSON orari_apertura).
+	// Struttura: { "0": {aperto, entrata, uscita, pausa_inizio, pausa_fine}, ... "6": {...} }
+	salvaOrariOfficina: async ({ request, locals }) => {
+		const f = await request.formData();
+		const raw = f.get('orari') as string;
+		let orari: any;
+		try {
+			orari = JSON.parse(raw);
+		} catch {
+			return fail(400, { errore: 'Orari non validi.' });
+		}
+		const { data: mia } = await locals.supabase
+			.from('officine')
+			.select('id')
+			.limit(1)
+			.maybeSingle();
+		if (!mia) return fail(403, { errore: 'Nessuna officina.' });
+		const { data: updated, error } = await locals.supabase
+			.from('officine')
+			.update({ orari_apertura: orari })
+			.eq('id', mia.id)
+			.select('id')
+			.maybeSingle();
+		if (error) return fail(400, { errore: error.message });
+		if (!updated) return fail(403, { errore: 'Salvataggio non riuscito.' });
+		return { ok: true };
+	},
+
 	// Primo avvio: crea l'officina e collega l'utente come titolare.
 	// Passa dalla funzione RPC (SECURITY DEFINER): l'insert diretto in
 	// `officine` è bloccato da RLS finché l'utente non ha un'officina.

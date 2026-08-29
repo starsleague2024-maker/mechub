@@ -6,6 +6,7 @@
 	import Modal from '$lib/components/Modal.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import CampoAuto from '$lib/components/CampoAuto.svelte';
+	import OrariSettimana from '$lib/components/OrariSettimana.svelte';
 	import {
 		ALIMENTAZIONE,
 		ALIMENTAZIONI,
@@ -123,6 +124,26 @@
 		queueMicrotask(() => formToggleCat?.requestSubmit());
 	}
 	const categorieAttiveCount = $derived(data.categorie.filter((c: any) => c.attiva).length);
+
+	// ── Orari officina ──
+	let orariOfficina = $state<Record<string, any>>(data.officina.orari_apertura ?? {});
+	let orariStato = $state<'idle' | 'saving' | 'ok' | 'error'>('idle');
+	let formOrari = $state<HTMLFormElement | null>(null);
+	function onCambioOrari(dati: Record<string, any>) {
+		orariOfficina = dati;
+	}
+	async function salvaOrari() {
+		orariStato = 'saving';
+		try {
+			const fd = new FormData();
+			fd.set('orari', JSON.stringify(orariOfficina));
+			const res = await fetch('?/salvaOrariOfficina', { method: 'POST', body: fd });
+			orariStato = res.ok ? 'ok' : 'error';
+			if (orariStato === 'ok') setTimeout(() => (orariStato = 'idle'), 1800);
+		} catch {
+			orariStato = 'error';
+		}
+	}
 </script>
 
 <svelte:head><title>Impostazioni · Gestionale Officina</title></svelte:head>
@@ -190,6 +211,15 @@
 	</form>
 
 	<div class="sezioni">
+		<!-- ─── Accesso rapido Ruoli & Staff ─── -->
+		<a href="/impostazioni/staff" class="staff-banner">
+			<div class="staff-banner-testo">
+				<div class="staff-banner-tit">Ruoli & Staff</div>
+				<div class="staff-banner-sub">Persone, ruoli, orari, competenze, mansioni e permessi</div>
+			</div>
+			<span class="staff-banner-freccia">→</span>
+		</a>
+
 		<!-- ─── Profilo officina ─── -->
 		<Sezione titolo="Officina" descrizione="Anagrafica, contatti, social e fatturazione" aperta={true}>
 			<div class="profilo">
@@ -289,6 +319,21 @@
 			</div>
 		</Sezione>
 
+		<!-- ─── Orari di apertura officina ─── -->
+		<Sezione titolo="Orari di apertura" descrizione="Orari settimanali dell'officina">
+			<p class="muted small mb-2">
+				Imposta gli orari di apertura per ogni giorno. Questi orari faranno da base
+				per lo staff: quando crei una persona potrai copiarli e modificarli.
+			</p>
+			<OrariSettimana valore={orariOfficina} onChange={onCambioOrari} />
+			<div class="flex gap-1 mt-2" style="align-items:center">
+				<button class="btn btn-accent" type="button" onclick={salvaOrari}>Salva orari</button>
+				{#if orariStato === 'saving'}<span class="muted small">salvataggio…</span>
+				{:else if orariStato === 'ok'}<span class="small" style="color:#1a7f4b">salvato ✓</span>
+				{:else if orariStato === 'error'}<span class="small" style="color:#c0392b">errore</span>{/if}
+			</div>
+		</Sezione>
+
 		<!-- ─── Veicoli trattati ─── -->
 		<Sezione titolo="Veicoli trattati" descrizione="Categorie di veicolo" badge={categorieAttiveCount}>
 			<p class="muted small mb-2">Attiva le categorie di veicolo che l'officina tratta. Utile al Planner per assegnare le risorse giuste.</p>
@@ -359,7 +404,7 @@
 
 		<!-- ─── Ruoli ─── -->
 		<Sezione titolo="Ruoli" descrizione="Ruoli del personale" badge={data.ruoli.length}>
-			<p class="muted small mb-2">I ruoli base sono già pronti (Titolare, Desk, Capofficina, Meccanico). Le competenze specifiche si agganciano al profilo di ciascuna persona in <a href="/organico">Organico</a>. Aggiungi altri ruoli se servono.</p>
+			<p class="muted small mb-2">I ruoli base sono già pronti (Titolare, Desk, Capofficina, Meccanico). Le competenze specifiche si agganciano al profilo di ciascuna persona in <a href="/impostazioni/staff">Organico</a>. Aggiungi altri ruoli se servono.</p>
 			{#if data.ruoli.length > 0}
 				<ul class="lista-el mb-2">
 					{#each data.ruoli as r}
@@ -389,7 +434,7 @@
 			<p class="muted small mb-2">
 				Elenco unico di tutte le certificazioni e abilitazioni: quelle dell'officina e quelle personali
 				dello staff. Filtra per ambito, tipo o cerca per nome/persona — utile in caso di controllo.
-				Le abilitazioni personali si aggiungono anche dalla scheda di ciascun membro in <a href="/organico">Organico</a>.
+				Le abilitazioni personali si aggiungono anche dalla scheda di ciascun membro in <a href="/impostazioni/staff">Organico</a>.
 			</p>
 
 			<!-- Barra filtri -->
@@ -746,5 +791,35 @@
 	.seg-btn.on {
 		background: var(--grafite-900);
 		color: #fff;
+	}
+	.staff-banner {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 14px;
+		padding: 18px 22px;
+		background: var(--grafite-900, #2a2d33);
+		color: #fff;
+		border-radius: var(--r, 10px);
+		text-decoration: none;
+		transition: transform 0.1s;
+	}
+	.staff-banner:hover {
+		transform: translateY(-2px);
+	}
+	.staff-banner-tit {
+		font-family: var(--display);
+		font-weight: 700;
+		font-size: 18px;
+		letter-spacing: 0.02em;
+	}
+	.staff-banner-sub {
+		font-size: 13px;
+		color: var(--acciaio-400, #9aa3af);
+		margin-top: 2px;
+	}
+	.staff-banner-freccia {
+		font-size: 22px;
+		color: var(--cantiere, #f5b301);
 	}
 </style>
