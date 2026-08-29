@@ -38,6 +38,13 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 				.order('data_scadenza', { ascending: true, nullsFirst: false })
 		]);
 		officinaFull = o.data;
+		// signed URL del logo (bucket privato), se presente
+		if (officinaFull?.logo_path) {
+			const { data: signed } = await sb.storage
+				.from('logo-officina')
+				.createSignedUrl(officinaFull.logo_path, 3600);
+			officinaFull.logo_url = signed?.signedUrl ?? null;
+		}
 		categorie = (cat.data ?? []).map((r: any) => r.categoria).filter(Boolean);
 		tutteCategorie = tuttecat.data ?? [];
 		ruoli = ru.data ?? [];
@@ -75,13 +82,77 @@ export const actions: Actions = {
 
 	aggiornaOfficina: async ({ request, locals }) => {
 		const f = await request.formData();
+		// helper: stringa ripulita o null
+		const s = (k: string) => ((f.get(k) as string)?.trim() || null);
 		const { error } = await locals.supabase
 			.from('officine')
 			.update({
 				nome: (f.get('nome') as string)?.trim(),
-				indirizzo: (f.get('indirizzo') as string)?.trim() || null
+				indirizzo: s('indirizzo'),
+				cap: s('cap'),
+				citta: s('citta'),
+				provincia: s('provincia'),
+				// contatti
+				telefono_fisso: s('telefono_fisso'),
+				cellulare: s('cellulare'),
+				email: s('email'),
+				pec: s('pec'),
+				sito_web: s('sito_web'),
+				// social / messaggistica
+				whatsapp: s('whatsapp'),
+				whatsapp_gruppo: s('whatsapp_gruppo'),
+				instagram: s('instagram'),
+				facebook: s('facebook'),
+				tiktok: s('tiktok'),
+				google_business: s('google_business'),
+				// fiscali / fatturazione
+				ragione_sociale: s('ragione_sociale'),
+				partita_iva: s('partita_iva'),
+				codice_fiscale: s('codice_fiscale'),
+				codice_sdi: s('codice_sdi'),
+				iban: s('iban'),
+				rea: s('rea')
 			})
 			.eq('id', f.get('id') as string);
+		if (error) return fail(400, { errore: error.message });
+		return { ok: true };
+	},
+
+	// Logo officina — path: {officina_id}/{filename} nel bucket privato 'logo-officina'
+	caricaLogo: async ({ request, locals }) => {
+		const f = await request.formData();
+		const officinaId = f.get('officina_id') as string;
+		const file = f.get('file') as File;
+		if (!file || file.size === 0) return fail(400, { errore: 'Nessun file selezionato.' });
+		const nomePulito = file.name.replace(/[^\w.\-]/g, '_');
+		const path = `${officinaId}/${nomePulito}`;
+		const { error: eUp } = await locals.supabase.storage
+			.from('logo-officina')
+			.upload(path, file, { upsert: true });
+		if (eUp) return fail(400, { errore: eUp.message });
+		const { error } = await locals.supabase
+			.from('officine')
+			.update({ logo_path: path })
+			.eq('id', officinaId);
+		if (error) return fail(400, { errore: error.message });
+		return { ok: true };
+	},
+
+	rimuoviLogo: async ({ request, locals }) => {
+		const f = await request.formData();
+		const officinaId = f.get('officina_id') as string;
+		const { data: o } = await locals.supabase
+			.from('officine')
+			.select('logo_path')
+			.eq('id', officinaId)
+			.maybeSingle();
+		if (o?.logo_path) {
+			await locals.supabase.storage.from('logo-officina').remove([o.logo_path]);
+		}
+		const { error } = await locals.supabase
+			.from('officine')
+			.update({ logo_path: null })
+			.eq('id', officinaId);
 		if (error) return fail(400, { errore: error.message });
 		return { ok: true };
 	},

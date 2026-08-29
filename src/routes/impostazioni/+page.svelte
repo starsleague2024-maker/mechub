@@ -141,14 +141,104 @@
 	</form>
 
 	<div class="sezioni">
-		<!-- ─── Dati officina ─── -->
-		<Sezione titolo="Officina" descrizione="Nome e indirizzo" aperta={true}>
-			<form method="POST" action="?/aggiornaOfficina" use:enhance class="flex-col gap-2" style="max-width:480px">
+		<!-- ─── Profilo officina ─── -->
+		<Sezione titolo="Officina" descrizione="Anagrafica, contatti, social e fatturazione" aperta={true}>
+			<form method="POST" action="?/aggiornaOfficina" use:enhance class="flex-col gap-3 profilo">
 				<input type="hidden" name="id" value={data.officina.id} />
-				<div class="field"><label for="no">Nome</label><input id="no" class="input" name="nome" value={data.officina.nome} /></div>
-				<div class="field"><label for="in">Indirizzo</label><input id="in" class="input" name="indirizzo" value={data.officina.indirizzo ?? ''} /></div>
-				<div><button class="btn btn-accent" type="submit">Salva</button></div>
+
+				<!-- Identità -->
+				<div class="blocco">
+					<div class="blocco-tit">Identità</div>
+					<div class="griglia g-2">
+						<div class="field"><label for="no">Nome officina</label><input id="no" class="input" name="nome" value={data.officina.nome} /></div>
+						<div class="field"><label for="rs">Ragione sociale</label><input id="rs" class="input" name="ragione_sociale" value={data.officina.ragione_sociale ?? ''} placeholder="Per la fatturazione" /></div>
+					</div>
+				</div>
+
+				<!-- Sede -->
+				<div class="blocco">
+					<div class="blocco-tit">Sede</div>
+					<div class="field"><label for="in">Indirizzo</label><input id="in" class="input" name="indirizzo" value={data.officina.indirizzo ?? ''} /></div>
+					<div class="griglia g-3">
+						<div class="field"><label for="cap">CAP</label><input id="cap" class="input mono" name="cap" value={data.officina.cap ?? ''} maxlength="5" /></div>
+						<div class="field"><label for="citta">Città</label><input id="citta" class="input" name="citta" value={data.officina.citta ?? ''} /></div>
+						<div class="field"><label for="prov">Provincia</label><input id="prov" class="input mono" name="provincia" value={data.officina.provincia ?? ''} maxlength="2" placeholder="LU" /></div>
+					</div>
+				</div>
+
+				<!-- Contatti -->
+				<div class="blocco">
+					<div class="blocco-tit">Contatti</div>
+					<div class="griglia g-2">
+						<div class="field"><label for="tf">Telefono fisso</label><input id="tf" class="input mono" name="telefono_fisso" value={data.officina.telefono_fisso ?? ''} /></div>
+						<div class="field"><label for="cel">Cellulare</label><input id="cel" class="input mono" name="cellulare" value={data.officina.cellulare ?? ''} /></div>
+					</div>
+					<div class="griglia g-2">
+						<div class="field"><label for="em">Email</label><input id="em" class="input" type="email" name="email" value={data.officina.email ?? ''} /></div>
+						<div class="field"><label for="pec">PEC</label><input id="pec" class="input" type="email" name="pec" value={data.officina.pec ?? ''} /></div>
+					</div>
+					<div class="field"><label for="web">Sito web</label><input id="web" class="input" name="sito_web" value={data.officina.sito_web ?? ''} placeholder="https://" /></div>
+				</div>
+
+				<!-- Social & messaggistica -->
+				<div class="blocco">
+					<div class="blocco-tit">Social e messaggistica</div>
+					<div class="griglia g-2">
+						<div class="field"><label for="wa">WhatsApp</label><input id="wa" class="input" name="whatsapp" value={data.officina.whatsapp ?? ''} placeholder="Numero o link wa.me" /></div>
+						<div class="field"><label for="wag">Gruppo / broadcast WhatsApp</label><input id="wag" class="input" name="whatsapp_gruppo" value={data.officina.whatsapp_gruppo ?? ''} placeholder="Link invito" /></div>
+					</div>
+					<div class="griglia g-2">
+						<div class="field"><label for="ig">Instagram</label><input id="ig" class="input" name="instagram" value={data.officina.instagram ?? ''} placeholder="@handle o URL" /></div>
+						<div class="field"><label for="fb">Facebook</label><input id="fb" class="input" name="facebook" value={data.officina.facebook ?? ''} placeholder="URL pagina" /></div>
+					</div>
+					<div class="griglia g-2">
+						<div class="field"><label for="tk">TikTok</label><input id="tk" class="input" name="tiktok" value={data.officina.tiktok ?? ''} placeholder="@handle o URL" /></div>
+						<div class="field"><label for="gb">Google Business</label><input id="gb" class="input" name="google_business" value={data.officina.google_business ?? ''} placeholder="Link scheda" /></div>
+					</div>
+				</div>
+
+				<!-- Fatturazione -->
+				<div class="blocco">
+					<div class="blocco-tit">Dati fiscali e fatturazione</div>
+					<div class="griglia g-2">
+						<div class="field"><label for="piva">Partita IVA</label><input id="piva" class="input mono" name="partita_iva" value={data.officina.partita_iva ?? ''} /></div>
+						<div class="field"><label for="cf">Codice fiscale</label><input id="cf" class="input mono" name="codice_fiscale" value={data.officina.codice_fiscale ?? ''} /></div>
+					</div>
+					<div class="griglia g-2">
+						<div class="field"><label for="sdi">Codice SDI</label><input id="sdi" class="input mono" name="codice_sdi" value={data.officina.codice_sdi ?? ''} maxlength="7" placeholder="7 caratteri" /></div>
+						<div class="field"><label for="rea">REA <span class="muted small">(facoltativo)</span></label><input id="rea" class="input mono" name="rea" value={data.officina.rea ?? ''} placeholder="LU-123456" /></div>
+					</div>
+					<div class="field"><label for="iban">IBAN</label><input id="iban" class="input mono" name="iban" value={data.officina.iban ?? ''} /></div>
+				</div>
+
+				<div><button class="btn btn-accent" type="submit">Salva profilo</button></div>
 			</form>
+
+			<!-- Logo (fuori dal form principale: upload separato) -->
+			<div class="blocco logo-blocco mt-2">
+				<div class="blocco-tit">Logo</div>
+				<div class="logo-riga">
+					{#if data.officina.logo_url}
+						<img class="logo-preview" src={data.officina.logo_url} alt="Logo officina" />
+					{:else}
+						<div class="logo-vuoto">Nessun logo</div>
+					{/if}
+					<div class="flex-col gap-1">
+						<form method="POST" action="?/caricaLogo" use:enhance enctype="multipart/form-data" class="flex gap-1">
+							<input type="hidden" name="officina_id" value={data.officina.id} />
+							<input class="input" type="file" name="file" accept="image/*" required />
+							<button class="btn btn-sm" type="submit">Carica</button>
+						</form>
+						{#if data.officina.logo_path}
+							<form method="POST" action="?/rimuoviLogo" use:enhance>
+								<input type="hidden" name="officina_id" value={data.officina.id} />
+								<button class="btn btn-ghost btn-sm btn-danger" type="submit">Rimuovi logo</button>
+							</form>
+						{/if}
+						<span class="hint">Usato per intestare preventivi e documenti. Consigliato PNG/JPG, sfondo chiaro.</span>
+					</div>
+				</div>
+			</div>
 		</Sezione>
 
 		<!-- ─── Veicoli trattati ─── -->
@@ -499,5 +589,63 @@
 	}
 	.mr-auto {
 		margin-right: auto;
+	}
+	/* Profilo officina a sotto-blocchi */
+	.profilo {
+		max-width: 640px;
+	}
+	.blocco {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		padding: 14px 16px;
+		background: var(--nebbia-50);
+		border-radius: var(--r);
+		border: 1px solid var(--bordo);
+	}
+	.blocco-tit {
+		font-family: var(--display);
+		font-weight: 600;
+		font-size: 13px;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--testo-tenue);
+		padding-bottom: 2px;
+	}
+	.logo-blocco {
+		max-width: 640px;
+	}
+	.logo-riga {
+		display: flex;
+		gap: 16px;
+		align-items: flex-start;
+	}
+	.logo-preview {
+		width: 96px;
+		height: 96px;
+		object-fit: contain;
+		background: var(--bianco, #fff);
+		border: 1px solid var(--bordo);
+		border-radius: var(--r);
+		padding: 6px;
+		flex-shrink: 0;
+	}
+	.logo-vuoto {
+		width: 96px;
+		height: 96px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
+		font-size: 12px;
+		color: var(--testo-tenue);
+		background: var(--acciaio-100);
+		border: 1px dashed var(--bordo);
+		border-radius: var(--r);
+		flex-shrink: 0;
+	}
+	.hint {
+		font-size: 12px;
+		color: var(--testo-tenue);
 	}
 </style>
