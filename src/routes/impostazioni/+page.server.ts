@@ -12,13 +12,14 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 	let competenze: any[] = [];
 	let alimentazioni: any[] = [];
 	let certificazioniOfficina: any[] = [];
+	let certificazioniTutte: any[] = [];
 
 	if (officina) {
-		const [o, cat, tuttecat, ru, co, al, ce] = await Promise.all([
+		const [o, cat, tuttecat, ru, co, al, ce, cs] = await Promise.all([
 			sb.from('officine').select('*').eq('id', officina.id).maybeSingle(),
 			sb
 				.from('officina_categorie_veicolo')
-				.select('categoria:categorie_veicolo(id, nome)')
+				.select('attiva, categoria:categorie_veicolo(id, nome)')
 				.eq('officina_id', officina.id),
 			sb.from('categorie_veicolo').select('id, nome').order('nome'),
 			sb.from('ruoli').select('id, nome, descrizione').eq('officina_id', officina.id).order('nome'),
@@ -35,6 +36,11 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 				.from('certificazioni_officina')
 				.select('id, tipo, nome, numero_codice, ente_rilascio, data_rilascio, data_scadenza, stato_manuale, note, documento_path')
 				.eq('officina_id', officina.id)
+				.order('data_scadenza', { ascending: true, nullsFirst: false }),
+			sb
+				.from('certificazioni')
+				.select('id, tipo, nome, numero_codice, ente_rilascio, data_rilascio, data_scadenza, stato_manuale, note, documento_path, persona:persone!inner(id, nome, cognome, officina_id)')
+				.eq('persona.officina_id', officina.id)
 				.order('data_scadenza', { ascending: true, nullsFirst: false })
 		]);
 		officinaFull = o.data;
@@ -45,12 +51,38 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 				.createSignedUrl(officinaFull.logo_path, 3600);
 			officinaFull.logo_url = signed?.signedUrl ?? null;
 		}
-		categorie = (cat.data ?? []).map((r: any) => r.categoria).filter(Boolean);
+		categorie = (cat.data ?? [])
+			.map((r: any) => (r.categoria ? { ...r.categoria, attiva: r.attiva } : null))
+			.filter(Boolean);
 		tutteCategorie = tuttecat.data ?? [];
 		ruoli = ru.data ?? [];
 		competenze = co.data ?? [];
 		alimentazioni = al.data ?? [];
 		certificazioniOfficina = ce.data ?? [];
+
+		// Elenco UNICO filtrabile: officina + staff, con ambito e "assegnata a".
+		const certOff = (ce.data ?? []).map((c: any) => ({
+			...c,
+			ambito: 'officina' as const,
+			assegnataA: 'Officina',
+			persona_id: null
+		}));
+		const certStaff = (cs.data ?? []).map((c: any) => ({
+			id: c.id,
+			tipo: c.tipo,
+			nome: c.nome,
+			numero_codice: c.numero_codice,
+			ente_rilascio: c.ente_rilascio,
+			data_rilascio: c.data_rilascio,
+			data_scadenza: c.data_scadenza,
+			stato_manuale: c.stato_manuale,
+			note: c.note,
+			documento_path: c.documento_path,
+			ambito: 'staff' as const,
+			assegnataA: c.persona ? `${c.persona.nome} ${c.persona.cognome ?? ''}`.trim() : '—',
+			persona_id: c.persona?.id ?? null
+		}));
+		certificazioniTutte = [...certOff, ...certStaff];
 	}
 
 	return {
@@ -60,7 +92,8 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 		ruoli,
 		competenze: competenze as any[],
 		alimentazioni: alimentazioni as any[],
-		certificazioniOfficina: certificazioniOfficina as any[]
+		certificazioniOfficina: certificazioniOfficina as any[],
+		certificazioniTutte: certificazioniTutte as any[]
 	};
 };
 
@@ -157,20 +190,34 @@ export const actions: Actions = {
 		return { ok: true };
 	},
 
-	creaCategoria: async ({ request, locals }) => {
+	// Attiva/disattiva una categoria veicolo trattata (flag `attiva`).
+	// Le 5 base esistono sempre (seed 0020); qui si commuta solo lo stato.
+	toggleCategoria: async ({ request, locals }) => {
+		const f = await request.formData();
+		const attiva = f.get('attiva') === 'true';
+		const { error } = await locals.supabase
+			.from('officina_categorie_veicolo')
+			.update({ attiva })
+			.eq('officina_id', f.get('officina_id') as string)
+			.eq('categoria_veicolo_id', f.get('categoria_id') as string);
+		if (error) return fail(400, { errore: error.message });
+		return { ok: true };
+	},
+
+	// "Altro": aggiunge una categoria extra e la collega già attiva.
+	aggiungiCategoria: async ({ request, locals }) => {
 		const f = await request.formData();
 		const officinaId = f.get('officina_id') as string;
 		const nome = (f.get('nome') as string)?.trim();
 		if (!nome) return fail(400, { errore: 'Il nome della categoria è obbligatorio.' });
 
-		// Le categorie sono globali (nome unique). Riusa se esiste, altrimenti crea.
+		// categorie globali (nome unique): riusa se esiste, altrimenti crea
 		let categoriaId: string;
 		const { data: esistente } = await locals.supabase
 			.from('categorie_veicolo')
 			.select('id')
 			.eq('nome', nome)
 			.maybeSingle();
-
 		if (esistente) {
 			categoriaId = esistente.id;
 		} else {
@@ -183,22 +230,11 @@ export const actions: Actions = {
 			categoriaId = nuova.id;
 		}
 
-		// collega all'officina (idempotente)
+		// collega attiva (idempotente sulla PK composta)
 		const { error: eLink } = await locals.supabase
 			.from('officina_categorie_veicolo')
-			.upsert({ officina_id: officinaId, categoria_veicolo_id: categoriaId });
+			.upsert({ officina_id: officinaId, categoria_veicolo_id: categoriaId, attiva: true });
 		if (eLink) return fail(400, { errore: eLink.message });
-		return { ok: true };
-	},
-
-	scollegaCategoria: async ({ request, locals }) => {
-		const f = await request.formData();
-		const { error } = await locals.supabase
-			.from('officina_categorie_veicolo')
-			.delete()
-			.eq('officina_id', f.get('officina_id') as string)
-			.eq('categoria_veicolo_id', f.get('categoria_id') as string);
-		if (error) return fail(400, { errore: error.message });
 		return { ok: true };
 	},
 

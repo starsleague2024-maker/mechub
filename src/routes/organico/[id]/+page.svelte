@@ -8,6 +8,7 @@
 	import {
 		STATO_CERTIFICAZIONE,
 		TIPO_CERTIFICAZIONE,
+		TIPI_CERT_STAFF,
 		statoCertificazione,
 		voce,
 		fmtData
@@ -38,7 +39,6 @@
 	}
 
 	// ── Certificazioni: modale crea/modifica ──
-	const TIPI = Object.keys(TIPO_CERTIFICAZIONE);
 	let modalCert = $state(false);
 	let certCorrente = $state<any>(null); // null = nuova, oggetto = modifica
 
@@ -116,8 +116,8 @@
 						{@const tp = c.tipo ? voce(TIPO_CERTIFICAZIONE, c.tipo) : null}
 						<tr>
 							<td>
-								{#if tp && (c.tipo === 'PES' || c.tipo === 'PAV')}
-									<Badge label={c.tipo} colore="cantiere" />
+								{#if c.tipo === 'PES/PAV/PEI'}
+									<Badge label="PES/PAV/PEI" colore="cantiere" />
 								{:else if c.tipo}
 									<span class="small">{tp?.label ?? c.tipo}</span>
 								{:else}
@@ -169,7 +169,7 @@
 					placeholder="PES, PAV, patentino…"
 				/>
 				<datalist id="tipi-cert">
-					{#each TIPI as t}<option value={t}>{TIPO_CERTIFICAZIONE[t].label}</option>{/each}
+					{#each TIPI_CERT_STAFF as t}<option value={t}>{TIPO_CERTIFICAZIONE[t].label}</option>{/each}
 				</datalist>
 			</div>
 			<div class="field">

@@ -114,15 +114,42 @@ export const STATO_CERTIFICAZIONE: Record<string, Voce> = {
 	sospesa: { label: 'Sospesa', colore: 'ambra' }
 };
 
-// Tipi di certificazione/abilitazione. PES e PAV sono resi individuabili con
-// un colore dedicato. Elenco non esaustivo: `tipo` accetta anche testo libero.
+// Tipi di certificazione/abilitazione. Voci preimpostate reali (normativa
+// italiana autoriparazione); `tipo` accetta comunque testo libero ("Altro…").
+// PES/PAV/PEI resa individuabile con colore dedicato.
 export const TIPO_CERTIFICAZIONE: Record<string, Voce> = {
-	PES: { label: 'PES — Persona Esperta', colore: 'cantiere' },
-	PAV: { label: 'PAV — Persona Avvertita', colore: 'cantiere' },
-	patentino: { label: 'Patentino', colore: 'blu' },
-	abilitazione: { label: 'Abilitazione', colore: 'blu' },
-	certificazione: { label: 'Certificazione tecnica', colore: 'neutro' }
+	// — Abilitazioni staff (persona) —
+	'PES/PAV/PEI': { label: 'PES/PAV/PEI — Lavori elettrici', colore: 'cantiere' },
+	'F-Gas personale': { label: 'Patentino F-Gas (personale)', colore: 'blu' },
+	'Primo soccorso': { label: 'Addetto primo soccorso', colore: 'blu' },
+	Antincendio: { label: 'Addetto antincendio', colore: 'blu' },
+	Preposto: { label: 'Preposto', colore: 'blu' },
+	Muletto: { label: 'Patentino muletto (carrello elevatore)', colore: 'blu' },
+	// — Certificazioni officina (impresa) —
+	'F-Gas impresa': { label: 'Certificazione impresa F-Gas', colore: 'neutro' },
+	SERMI: { label: 'SERMI', colore: 'neutro' },
+	'Registro Imprese': { label: 'Iscrizione Registro Imprese / Meccatronica', colore: 'neutro' },
+	DVR: { label: 'DVR', colore: 'neutro' },
+	'Medico competente': { label: 'Nomina medico competente', colore: 'neutro' }
 };
+
+// Voci da mostrare nella tendina, distinte per ambito. L'ultima opzione
+// nell'interfaccia sarà sempre "Altro…" (campo libero), gestita nella UI.
+export const TIPI_CERT_STAFF: string[] = [
+	'PES/PAV/PEI',
+	'F-Gas personale',
+	'Primo soccorso',
+	'Antincendio',
+	'Preposto',
+	'Muletto'
+];
+export const TIPI_CERT_OFFICINA: string[] = [
+	'F-Gas impresa',
+	'SERMI',
+	'Registro Imprese',
+	'DVR',
+	'Medico competente'
+];
 
 // Stato certificazione calcolato lato client (specchio della funzione SQL).
 // Precedenza allo stato manuale se presente (es. 'revocata').

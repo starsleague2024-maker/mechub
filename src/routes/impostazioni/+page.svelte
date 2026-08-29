@@ -10,6 +10,8 @@
 		ALIMENTAZIONI,
 		STATO_CERTIFICAZIONE,
 		TIPO_CERTIFICAZIONE,
+		TIPI_CERT_STAFF,
+		TIPI_CERT_OFFICINA,
 		statoCertificazione,
 		voce,
 		fmtData
@@ -54,9 +56,30 @@
 	}
 
 	// ── Certificazioni officina: modale crea/modifica ──
-	const TIPI_CERT = Object.keys(TIPO_CERTIFICAZIONE);
 	let modalCert = $state(false);
 	let certCorrente = $state<any>(null);
+
+	// ── Elenco unico filtrabile (staff + officina) ──
+	let filtroAmbito = $state<'tutti' | 'officina' | 'staff'>('tutti');
+	let filtroTipo = $state('');
+	let ricercaCert = $state('');
+
+	const certificazioniFiltrate = $derived(
+		(data.certificazioniTutte ?? []).filter((c: any) => {
+			if (filtroAmbito !== 'tutti' && c.ambito !== filtroAmbito) return false;
+			if (filtroTipo && c.tipo !== filtroTipo) return false;
+			if (ricercaCert.trim()) {
+				const q = ricercaCert.trim().toLowerCase();
+				const blob = `${c.nome ?? ''} ${c.tipo ?? ''} ${c.numero_codice ?? ''} ${c.ente_rilascio ?? ''} ${c.assegnataA ?? ''}`.toLowerCase();
+				if (!blob.includes(q)) return false;
+			}
+			return true;
+		})
+	);
+	// tipi presenti nell'elenco, per popolare il filtro
+	const tipiPresenti = $derived(
+		[...new Set((data.certificazioniTutte ?? []).map((c: any) => c.tipo).filter(Boolean))]
+	);
 
 	function apriNuovaCert() {
 		certCorrente = null;
@@ -87,6 +110,18 @@
 
 	const competenzeAttiveCount = $derived(data.competenze.filter((c: any) => c.attiva).length);
 	const albeoVuoto = $derived(data.competenze.length === 0);
+
+	// toggle categoria veicolo: stesso pattern del form nascosto delle alimentazioni
+	let formToggleCat = $state<HTMLFormElement | null>(null);
+	let catId = $state('');
+	let catAttiva = $state('true');
+	function onToggleCategoria(id: string, nuovoStato: boolean) {
+		if (!id) return;
+		catId = id;
+		catAttiva = String(nuovoStato);
+		queueMicrotask(() => formToggleCat?.requestSubmit());
+	}
+	const categorieAttiveCount = $derived(data.categorie.filter((c: any) => c.attiva).length);
 </script>
 
 <svelte:head><title>Impostazioni · Gestionale Officina</title></svelte:head>
@@ -140,12 +175,26 @@
 		<input type="hidden" name="attiva" value={alimAttiva} />
 	</form>
 
+	<!-- form nascosto per il toggle categoria veicolo -->
+	<form
+		method="POST"
+		action="?/toggleCategoria"
+		use:enhance
+		bind:this={formToggleCat}
+		class="hidden-form"
+	>
+		<input type="hidden" name="officina_id" value={data.officina.id} />
+		<input type="hidden" name="categoria_id" value={catId} />
+		<input type="hidden" name="attiva" value={catAttiva} />
+	</form>
+
 	<div class="sezioni">
 		<!-- ─── Profilo officina ─── -->
 		<Sezione titolo="Officina" descrizione="Anagrafica, contatti, social e fatturazione" aperta={true}>
 			<form method="POST" action="?/aggiornaOfficina" use:enhance class="flex-col gap-3 profilo">
 				<input type="hidden" name="id" value={data.officina.id} />
 
+				<div class="blocchi-grid">
 				<!-- Identità -->
 				<div class="blocco">
 					<div class="blocco-tit">Identità</div>
@@ -210,6 +259,7 @@
 					</div>
 					<div class="field"><label for="iban">IBAN</label><input id="iban" class="input mono" name="iban" value={data.officina.iban ?? ''} /></div>
 				</div>
+				</div>
 
 				<div><button class="btn btn-accent" type="submit">Salva profilo</button></div>
 			</form>
@@ -242,26 +292,27 @@
 		</Sezione>
 
 		<!-- ─── Veicoli trattati ─── -->
-		<Sezione titolo="Veicoli trattati" descrizione="Categorie di veicolo" badge={data.categorie.length}>
-			<p class="muted small mb-2">Le categorie di veicolo che l'officina tratta. Utile al Planner per assegnare le risorse giuste.</p>
-			{#if data.categorie.length > 0}
-				<div class="chips mb-2">
-					{#each data.categorie as c}
-						<span class="chip-el">
-							{c.nome}
-							<form method="POST" action="?/scollegaCategoria" use:enhance class="inline-x">
-								<input type="hidden" name="officina_id" value={data.officina.id} />
-								<input type="hidden" name="categoria_id" value={c.id} />
-								<button type="submit" aria-label="Rimuovi">×</button>
-							</form>
-						</span>
-					{/each}
-				</div>
-			{/if}
-			<form method="POST" action="?/creaCategoria" use:enhance class="flex gap-1">
+		<Sezione titolo="Veicoli trattati" descrizione="Categorie di veicolo" badge={categorieAttiveCount}>
+			<p class="muted small mb-2">Attiva le categorie di veicolo che l'officina tratta. Utile al Planner per assegnare le risorse giuste.</p>
+			<ul class="alim-lista">
+				{#each data.categorie as c}
+					<li>
+						<label class="alim-riga">
+							<input
+								type="checkbox"
+								checked={c.attiva}
+								onchange={(e) => onToggleCategoria(c.id, e.currentTarget.checked)}
+							/>
+							<span class="alim-nome">{c.nome}</span>
+							<span class="alim-stato" class:on={c.attiva}>{c.attiva ? 'Attiva' : 'Non attiva'}</span>
+						</label>
+					</li>
+				{/each}
+			</ul>
+			<form method="POST" action="?/aggiungiCategoria" use:enhance class="flex gap-1 mt-2" style="max-width:420px">
 				<input type="hidden" name="officina_id" value={data.officina.id} />
-				<input class="input" name="nome" placeholder="Es. Auto, Moto, Furgone, Camper" required />
-				<button class="btn btn-accent" type="submit">+</button>
+				<input class="input" name="nome" placeholder="Altro… (es. Autobus, Nautica)" required />
+				<button class="btn btn-accent" type="submit">+ Aggiungi</button>
 			</form>
 		</Sezione>
 
@@ -315,6 +366,7 @@
 
 		<!-- ─── Ruoli ─── -->
 		<Sezione titolo="Ruoli" descrizione="Ruoli del personale" badge={data.ruoli.length}>
+			<p class="muted small mb-2">I ruoli base sono già pronti (Titolare, Desk, Capofficina, Meccanico). Le competenze specifiche si agganciano al profilo di ciascuna persona in <a href="/organico">Organico</a>. Aggiungi altri ruoli se servono.</p>
 			{#if data.ruoli.length > 0}
 				<ul class="lista-el mb-2">
 					{#each data.ruoli as r}
@@ -328,34 +380,53 @@
 					{/each}
 				</ul>
 			{/if}
-			<form method="POST" action="?/creaRuolo" use:enhance class="flex gap-1">
+			<form method="POST" action="?/creaRuolo" use:enhance class="flex gap-1" style="max-width:420px">
 				<input type="hidden" name="officina_id" value={data.officina.id} />
-				<input class="input" name="nome" placeholder="Es. Meccanico, Capofficina" required />
-				<button class="btn btn-accent" type="submit">+</button>
+				<input class="input" name="nome" placeholder="Altro ruolo…" required />
+				<button class="btn btn-accent" type="submit">+ Aggiungi</button>
 			</form>
 		</Sezione>
 
-		<!-- ─── Certificazioni e abilitazioni officina ─── -->
+		<!-- ─── Certificazioni e abilitazioni (elenco unico filtrabile) ─── -->
 		<Sezione
 			titolo="Certificazioni e abilitazioni"
-			descrizione="Abilitazioni dell'officina"
-			badge={data.certificazioniOfficina.length}
+			descrizione="Staff e officina, in un unico elenco"
+			badge={data.certificazioniTutte?.length ?? 0}
 		>
 			<p class="muted small mb-2">
-				Certificazioni e abilitazioni che appartengono all'officina (autorizzazioni, iscrizioni,
-				certificazioni tecniche). Le abilitazioni personali dello staff si gestiscono nella scheda
-				di ciascun membro in <a href="/organico">Organico</a>.
+				Elenco unico di tutte le certificazioni e abilitazioni: quelle dell'officina e quelle personali
+				dello staff. Filtra per ambito, tipo o cerca per nome/persona — utile in caso di controllo.
+				Le abilitazioni personali si aggiungono anche dalla scheda di ciascun membro in <a href="/organico">Organico</a>.
 			</p>
-			{#if data.certificazioniOfficina.length > 0}
+
+			<!-- Barra filtri -->
+			<div class="filtri-cert mb-2">
+				<div class="seg">
+					<button class="seg-btn" class:on={filtroAmbito === 'tutti'} onclick={() => (filtroAmbito = 'tutti')}>Tutte</button>
+					<button class="seg-btn" class:on={filtroAmbito === 'officina'} onclick={() => (filtroAmbito = 'officina')}>Officina</button>
+					<button class="seg-btn" class:on={filtroAmbito === 'staff'} onclick={() => (filtroAmbito = 'staff')}>Staff</button>
+				</div>
+				<select class="select" bind:value={filtroTipo}>
+					<option value="">Tutti i tipi</option>
+					{#each tipiPresenti as t}
+						<option value={t}>{TIPO_CERTIFICAZIONE[t]?.label ?? t}</option>
+					{/each}
+				</select>
+				<input class="input" placeholder="Cerca nome, codice, persona…" bind:value={ricercaCert} />
+			</div>
+
+			{#if certificazioniFiltrate.length > 0}
 				<div class="tabella-wrap piatta mb-2">
 					<table class="dati">
 						<thead>
-							<tr><th>Tipo</th><th>Nome</th><th>Ente</th><th>Scadenza</th><th>Stato</th><th></th></tr>
+							<tr><th>Ambito</th><th>Assegnata a</th><th>Tipo</th><th>Nome</th><th>Ente</th><th>Scadenza</th><th>Stato</th><th></th></tr>
 						</thead>
 						<tbody>
-							{#each data.certificazioniOfficina as c}
+							{#each certificazioniFiltrate as c}
 								{@const st = voce(STATO_CERTIFICAZIONE, statoCertificazione(c.data_scadenza, c.stato_manuale))}
 								<tr>
+									<td><Badge label={c.ambito === 'officina' ? 'Officina' : 'Staff'} colore={c.ambito === 'officina' ? 'neutro' : 'blu'} /></td>
+									<td class="small">{c.assegnataA}</td>
 									<td class="small">{c.tipo ? (TIPO_CERTIFICAZIONE[c.tipo]?.label ?? c.tipo) : '—'}</td>
 									<td>{c.nome}{#if c.numero_codice}<span class="muted small mono"> · {c.numero_codice}</span>{/if}</td>
 									<td class="small muted">{c.ente_rilascio ?? '—'}</td>
@@ -368,15 +439,21 @@
 												<button type="submit" class="link-btn" title="Scarica allegato">📎</button>
 											</form>
 										{/if}
-										<button class="link-btn" onclick={() => apriModificaCert(c)}>Modifica</button>
+										{#if c.ambito === 'officina'}
+											<button class="link-btn" onclick={() => apriModificaCert(c)}>Modifica</button>
+										{:else}
+											<a class="link-btn" href={`/organico/${c.persona_id}`}>Apri scheda</a>
+										{/if}
 									</td>
 								</tr>
 							{/each}
 						</tbody>
 					</table>
 				</div>
+			{:else}
+				<p class="muted small mb-2">Nessuna certificazione corrisponde ai filtri.</p>
 			{/if}
-			<button class="btn btn-accent btn-sm" onclick={apriNuovaCert}>+ Aggiungi certificazione</button>
+			<button class="btn btn-accent btn-sm" onclick={apriNuovaCert}>+ Aggiungi certificazione officina</button>
 		</Sezione>
 	</div>
 
@@ -393,9 +470,9 @@
 			<div class="griglia g-2">
 				<div class="field">
 					<label for="co-tipo">Tipo</label>
-					<input id="co-tipo" class="input" name="tipo" list="tipi-cert-off" value={certCorrente?.tipo ?? ''} placeholder="Autorizzazione, certificazione…" />
+					<input id="co-tipo" class="input" name="tipo" list="tipi-cert-off" value={certCorrente?.tipo ?? ''} placeholder="Scegli o scrivi (Altro…)" />
 					<datalist id="tipi-cert-off">
-						{#each TIPI_CERT as t}<option value={t}>{TIPO_CERTIFICAZIONE[t].label}</option>{/each}
+						{#each TIPI_CERT_OFFICINA as t}<option value={t}>{TIPO_CERTIFICAZIONE[t].label}</option>{/each}
 					</datalist>
 				</div>
 				<div class="field">
@@ -466,25 +543,10 @@
 		display: flex;
 		flex-direction: column;
 		gap: 12px;
-		max-width: 900px;
+		width: 100%;
 	}
 	.hidden-form {
 		display: none;
-	}
-	.chips {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 7px;
-	}
-	.chip-el {
-		display: inline-flex;
-		align-items: center;
-		gap: 5px;
-		background: var(--acciaio-100);
-		padding: 4px 10px;
-		border-radius: 999px;
-		font-size: 13px;
-		font-weight: 500;
 	}
 	.lista-el {
 		list-style: none;
@@ -590,9 +652,16 @@
 	.mr-auto {
 		margin-right: auto;
 	}
-	/* Profilo officina a sotto-blocchi */
+	/* Profilo officina a sotto-blocchi: griglia responsive full-width.
+	   Su schermi larghi i blocchi si affiancano; su mobile si impilano. */
 	.profilo {
-		max-width: 640px;
+		width: 100%;
+	}
+	.profilo :global(.blocchi-grid) {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+		gap: 12px;
+		align-items: start;
 	}
 	.blocco {
 		display: flex;
@@ -613,7 +682,7 @@
 		padding-bottom: 2px;
 	}
 	.logo-blocco {
-		max-width: 640px;
+		width: 100%;
 	}
 	.logo-riga {
 		display: flex;
@@ -647,5 +716,42 @@
 	.hint {
 		font-size: 12px;
 		color: var(--testo-tenue);
+	}
+	/* Barra filtri certificazioni */
+	.filtri-cert {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		align-items: center;
+	}
+	.filtri-cert .select,
+	.filtri-cert .input {
+		max-width: 260px;
+	}
+	.seg {
+		display: inline-flex;
+		border: 1px solid var(--bordo);
+		border-radius: var(--r);
+		overflow: hidden;
+	}
+	.seg-btn {
+		background: var(--carta);
+		border: none;
+		padding: 7px 14px;
+		font-size: 13px;
+		font-weight: 500;
+		cursor: pointer;
+		color: var(--testo);
+		border-right: 1px solid var(--bordo);
+	}
+	.seg-btn:last-child {
+		border-right: none;
+	}
+	.seg-btn:hover {
+		background: var(--nebbia-50);
+	}
+	.seg-btn.on {
+		background: var(--grafite-900);
+		color: #fff;
 	}
 </style>
