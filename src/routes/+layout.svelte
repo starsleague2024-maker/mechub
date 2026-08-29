@@ -59,11 +59,15 @@
 	<div class="shell">
 		<aside class="sidebar" class:aperto={menuMobileAperto}>
 			<div class="marchio">
-				<span class="marchio-icona">⬢</span>
-				<div>
-					<div class="marchio-nome">OFFICINA</div>
-					<div class="marchio-sub">{data.officina?.nome ?? 'Gestionale'}</div>
-				</div>
+				{#if data.officina?.logo_url}
+					<img class="marchio-logo" src={data.officina.logo_url} alt={data.officina?.nome ?? 'Logo officina'} />
+				{:else}
+					<span class="marchio-icona">⬢</span>
+					<div>
+						<div class="marchio-nome">MecHub</div>
+						<div class="marchio-sub">{data.officina?.nome ?? 'Gestionale'}</div>
+					</div>
+				{/if}
 			</div>
 
 			<nav>
@@ -148,6 +152,12 @@
 	.marchio-icona {
 		font-size: 22px;
 		color: var(--cantiere);
+	}
+	.marchio-logo {
+		max-width: 100%;
+		max-height: 48px;
+		object-fit: contain;
+		display: block;
 	}
 	.marchio-nome {
 		font-family: var(--display);

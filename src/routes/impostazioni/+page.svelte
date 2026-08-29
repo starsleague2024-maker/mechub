@@ -5,6 +5,7 @@
 	import AlberoCompetenze from '$lib/components/AlberoCompetenze.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import CampoAuto from '$lib/components/CampoAuto.svelte';
 	import {
 		ALIMENTAZIONE,
 		ALIMENTAZIONI,
@@ -191,27 +192,26 @@
 	<div class="sezioni">
 		<!-- ─── Profilo officina ─── -->
 		<Sezione titolo="Officina" descrizione="Anagrafica, contatti, social e fatturazione" aperta={true}>
-			<form method="POST" action="?/aggiornaOfficina" use:enhance class="flex-col gap-3 profilo">
-				<input type="hidden" name="id" value={data.officina.id} />
-
+			<div class="profilo">
+				<p class="muted small mb-2">Le modifiche si salvano da sole quando esci da un campo. L'icona ↺ ripristina l'ultimo valore salvato.</p>
 				<div class="blocchi-grid">
 				<!-- Identità -->
 				<div class="blocco">
 					<div class="blocco-tit">Identità</div>
 					<div class="griglia g-2">
-						<div class="field"><label for="no">Nome officina</label><input id="no" class="input" name="nome" value={data.officina.nome} /></div>
-						<div class="field"><label for="rs">Ragione sociale</label><input id="rs" class="input" name="ragione_sociale" value={data.officina.ragione_sociale ?? ''} placeholder="Per la fatturazione" /></div>
+						<CampoAuto campo="nome" etichetta="Nome officina" valoreIniziale={data.officina.nome} />
+						<CampoAuto campo="ragione_sociale" etichetta="Ragione sociale" valoreIniziale={data.officina.ragione_sociale} placeholder="Per la fatturazione" />
 					</div>
 				</div>
 
 				<!-- Sede -->
 				<div class="blocco">
 					<div class="blocco-tit">Sede</div>
-					<div class="field"><label for="in">Indirizzo</label><input id="in" class="input" name="indirizzo" value={data.officina.indirizzo ?? ''} /></div>
+					<CampoAuto campo="indirizzo" etichetta="Indirizzo" valoreIniziale={data.officina.indirizzo} />
 					<div class="griglia g-3">
-						<div class="field"><label for="cap">CAP</label><input id="cap" class="input mono" name="cap" value={data.officina.cap ?? ''} maxlength="5" /></div>
-						<div class="field"><label for="citta">Città</label><input id="citta" class="input" name="citta" value={data.officina.citta ?? ''} /></div>
-						<div class="field"><label for="prov">Provincia</label><input id="prov" class="input mono" name="provincia" value={data.officina.provincia ?? ''} maxlength="2" placeholder="LU" /></div>
+						<CampoAuto campo="cap" etichetta="CAP" valoreIniziale={data.officina.cap} mono maxlength={5} />
+						<CampoAuto campo="citta" etichetta="Città" valoreIniziale={data.officina.citta} />
+						<CampoAuto campo="provincia" etichetta="Provincia" valoreIniziale={data.officina.provincia} mono maxlength={2} placeholder="LU" />
 					</div>
 				</div>
 
@@ -219,30 +219,30 @@
 				<div class="blocco">
 					<div class="blocco-tit">Contatti</div>
 					<div class="griglia g-2">
-						<div class="field"><label for="tf">Telefono fisso</label><input id="tf" class="input mono" name="telefono_fisso" value={data.officina.telefono_fisso ?? ''} /></div>
-						<div class="field"><label for="cel">Cellulare</label><input id="cel" class="input mono" name="cellulare" value={data.officina.cellulare ?? ''} /></div>
+						<CampoAuto campo="telefono_fisso" etichetta="Telefono fisso" valoreIniziale={data.officina.telefono_fisso} mono />
+						<CampoAuto campo="cellulare" etichetta="Cellulare" valoreIniziale={data.officina.cellulare} mono />
 					</div>
 					<div class="griglia g-2">
-						<div class="field"><label for="em">Email</label><input id="em" class="input" type="email" name="email" value={data.officina.email ?? ''} /></div>
-						<div class="field"><label for="pec">PEC</label><input id="pec" class="input" type="email" name="pec" value={data.officina.pec ?? ''} /></div>
+						<CampoAuto campo="email" etichetta="Email" valoreIniziale={data.officina.email} type="email" />
+						<CampoAuto campo="pec" etichetta="PEC" valoreIniziale={data.officina.pec} type="email" />
 					</div>
-					<div class="field"><label for="web">Sito web</label><input id="web" class="input" name="sito_web" value={data.officina.sito_web ?? ''} placeholder="https://" /></div>
+					<CampoAuto campo="sito_web" etichetta="Sito web" valoreIniziale={data.officina.sito_web} placeholder="https://" />
 				</div>
 
 				<!-- Social & messaggistica -->
 				<div class="blocco">
 					<div class="blocco-tit">Social e messaggistica</div>
 					<div class="griglia g-2">
-						<div class="field"><label for="wa">WhatsApp</label><input id="wa" class="input" name="whatsapp" value={data.officina.whatsapp ?? ''} placeholder="Numero o link wa.me" /></div>
-						<div class="field"><label for="wag">Gruppo / broadcast WhatsApp</label><input id="wag" class="input" name="whatsapp_gruppo" value={data.officina.whatsapp_gruppo ?? ''} placeholder="Link invito" /></div>
+						<CampoAuto campo="whatsapp" etichetta="WhatsApp" valoreIniziale={data.officina.whatsapp} placeholder="Numero o link wa.me" />
+						<CampoAuto campo="whatsapp_gruppo" etichetta="Gruppo / broadcast WhatsApp" valoreIniziale={data.officina.whatsapp_gruppo} placeholder="Link invito" />
 					</div>
 					<div class="griglia g-2">
-						<div class="field"><label for="ig">Instagram</label><input id="ig" class="input" name="instagram" value={data.officina.instagram ?? ''} placeholder="@handle o URL" /></div>
-						<div class="field"><label for="fb">Facebook</label><input id="fb" class="input" name="facebook" value={data.officina.facebook ?? ''} placeholder="URL pagina" /></div>
+						<CampoAuto campo="instagram" etichetta="Instagram" valoreIniziale={data.officina.instagram} placeholder="@handle o URL" />
+						<CampoAuto campo="facebook" etichetta="Facebook" valoreIniziale={data.officina.facebook} placeholder="URL pagina" />
 					</div>
 					<div class="griglia g-2">
-						<div class="field"><label for="tk">TikTok</label><input id="tk" class="input" name="tiktok" value={data.officina.tiktok ?? ''} placeholder="@handle o URL" /></div>
-						<div class="field"><label for="gb">Google Business</label><input id="gb" class="input" name="google_business" value={data.officina.google_business ?? ''} placeholder="Link scheda" /></div>
+						<CampoAuto campo="tiktok" etichetta="TikTok" valoreIniziale={data.officina.tiktok} placeholder="@handle o URL" />
+						<CampoAuto campo="google_business" etichetta="Google Business" valoreIniziale={data.officina.google_business} placeholder="Link scheda" />
 					</div>
 				</div>
 
@@ -250,19 +250,17 @@
 				<div class="blocco">
 					<div class="blocco-tit">Dati fiscali e fatturazione</div>
 					<div class="griglia g-2">
-						<div class="field"><label for="piva">Partita IVA</label><input id="piva" class="input mono" name="partita_iva" value={data.officina.partita_iva ?? ''} /></div>
-						<div class="field"><label for="cf">Codice fiscale</label><input id="cf" class="input mono" name="codice_fiscale" value={data.officina.codice_fiscale ?? ''} /></div>
+						<CampoAuto campo="partita_iva" etichetta="Partita IVA" valoreIniziale={data.officina.partita_iva} mono />
+						<CampoAuto campo="codice_fiscale" etichetta="Codice fiscale" valoreIniziale={data.officina.codice_fiscale} mono />
 					</div>
 					<div class="griglia g-2">
-						<div class="field"><label for="sdi">Codice SDI</label><input id="sdi" class="input mono" name="codice_sdi" value={data.officina.codice_sdi ?? ''} maxlength="7" placeholder="7 caratteri" /></div>
-						<div class="field"><label for="rea">REA <span class="muted small">(facoltativo)</span></label><input id="rea" class="input mono" name="rea" value={data.officina.rea ?? ''} placeholder="LU-123456" /></div>
+						<CampoAuto campo="codice_sdi" etichetta="Codice SDI" valoreIniziale={data.officina.codice_sdi} mono maxlength={7} placeholder="7 caratteri" />
+						<CampoAuto campo="rea" etichetta="REA (facoltativo)" valoreIniziale={data.officina.rea} mono placeholder="LU-123456" />
 					</div>
-					<div class="field"><label for="iban">IBAN</label><input id="iban" class="input mono" name="iban" value={data.officina.iban ?? ''} /></div>
+					<CampoAuto campo="iban" etichetta="IBAN" valoreIniziale={data.officina.iban} mono />
 				</div>
 				</div>
-
-				<div><button class="btn btn-accent" type="submit">Salva profilo</button></div>
-			</form>
+			</div>
 
 			<!-- Logo (fuori dal form principale: upload separato) -->
 			<div class="blocco logo-blocco mt-2">
@@ -309,11 +307,6 @@
 					</li>
 				{/each}
 			</ul>
-			<form method="POST" action="?/aggiungiCategoria" use:enhance class="flex gap-1 mt-2" style="max-width:420px">
-				<input type="hidden" name="officina_id" value={data.officina.id} />
-				<input class="input" name="nome" placeholder="Altro… (es. Autobus, Nautica)" required />
-				<button class="btn btn-accent" type="submit">+ Aggiungi</button>
-			</form>
 		</Sezione>
 
 		<!-- ─── Alimentazioni trattate ─── -->

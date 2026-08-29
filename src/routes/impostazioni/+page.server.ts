@@ -117,7 +117,7 @@ export const actions: Actions = {
 		const f = await request.formData();
 		// helper: stringa ripulita o null
 		const s = (k: string) => ((f.get(k) as string)?.trim() || null);
-		const { error } = await locals.supabase
+		const { data: updated, error } = await locals.supabase
 			.from('officine')
 			.update({
 				nome: (f.get('nome') as string)?.trim(),
@@ -146,8 +146,11 @@ export const actions: Actions = {
 				iban: s('iban'),
 				rea: s('rea')
 			})
-			.eq('id', f.get('id') as string);
+			.eq('id', f.get('id') as string)
+			.select('id')
+			.maybeSingle();
 		if (error) return fail(400, { errore: error.message });
+		if (!updated) return fail(403, { errore: 'Salvataggio non riuscito: nessuna riga aggiornata. Ricarica la pagina e riprova.' });
 		return { ok: true };
 	},
 
