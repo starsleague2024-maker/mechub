@@ -211,13 +211,14 @@
 	</form>
 
 	<div class="sezioni">
-		<!-- ─── Accesso rapido Ruoli & Staff ─── -->
-		<a href="/impostazioni/staff" class="staff-banner">
-			<div class="staff-banner-testo">
-				<div class="staff-banner-tit">Ruoli & Staff</div>
-				<div class="staff-banner-sub">Persone, ruoli, orari, competenze, mansioni e permessi</div>
-			</div>
-			<span class="staff-banner-freccia">→</span>
+		<!-- ─── Accesso Ruoli & Staff ─── -->
+		<a href="/impostazioni/staff" class="staff-link">
+			<span class="staff-link-ico">◑</span>
+			<span class="staff-link-testo">
+				<span class="staff-link-tit">Ruoli & Staff</span>
+				<span class="staff-link-sub">Persone, ruoli, orari, competenze, mansioni e permessi</span>
+			</span>
+			<span class="staff-link-freccia">→</span>
 		</a>
 
 		<!-- ─── Profilo officina ─── -->
@@ -402,9 +403,9 @@
 			{/if}
 		</Sezione>
 
-		<!-- ─── Ruoli ─── -->
-		<Sezione titolo="Ruoli" descrizione="Ruoli del personale" badge={data.ruoli.length}>
-			<p class="muted small mb-2">I ruoli base sono già pronti (Titolare, Desk, Capofficina, Meccanico). Le competenze specifiche si agganciano al profilo di ciascuna persona in <a href="/impostazioni/staff">Organico</a>. Aggiungi altri ruoli se servono.</p>
+		<!-- ─── Ruoli disponibili (catalogo ruoli-tipo) ─── -->
+		<Sezione titolo="Ruoli disponibili" descrizione="Elenco dei ruoli assegnabili alle persone" badge={data.ruoli.length}>
+			<p class="muted small mb-2">Questi sono i ruoli che puoi assegnare alle persone in <a href="/impostazioni/staff">Ruoli &amp; Staff</a>. I quattro base sono già pronti (Titolare, Desk, Capofficina, Meccanico). Aggiungine altri se la tua officina ne ha bisogno.</p>
 			{#if data.ruoli.length > 0}
 				<ul class="lista-el mb-2">
 					{#each data.ruoli as r}
@@ -792,34 +793,41 @@
 		background: var(--grafite-900);
 		color: #fff;
 	}
-	.staff-banner {
+	.staff-link {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
 		gap: 14px;
-		padding: 18px 22px;
-		background: var(--grafite-900, #2a2d33);
-		color: #fff;
+		padding: 14px 18px;
+		background: var(--carta, #fff);
+		border: 1px solid var(--bordo, #e2e5ea);
 		border-radius: var(--r, 10px);
 		text-decoration: none;
-		transition: transform 0.1s;
+		color: inherit;
+		transition: border-color 0.12s;
 	}
-	.staff-banner:hover {
-		transform: translateY(-2px);
+	.staff-link:hover {
+		border-color: var(--cantiere, #f5b301);
 	}
-	.staff-banner-tit {
-		font-family: var(--display);
-		font-weight: 700;
-		font-size: 18px;
-		letter-spacing: 0.02em;
-	}
-	.staff-banner-sub {
-		font-size: 13px;
-		color: var(--acciaio-400, #9aa3af);
-		margin-top: 2px;
-	}
-	.staff-banner-freccia {
+	.staff-link-ico {
 		font-size: 22px;
-		color: var(--cantiere, #f5b301);
+		color: var(--cantiere-scuro, #b5850a);
+	}
+	.staff-link-testo {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+	}
+	.staff-link-tit {
+		font-family: var(--display);
+		font-weight: 600;
+		font-size: 16px;
+	}
+	.staff-link-sub {
+		font-size: 13px;
+		color: var(--testo-tenue, #7a828e);
+	}
+	.staff-link-freccia {
+		font-size: 20px;
+		color: var(--testo-tenue, #7a828e);
 	}
 </style>

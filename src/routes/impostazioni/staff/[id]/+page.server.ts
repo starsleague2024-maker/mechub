@@ -23,10 +23,15 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
 
 	const { data: persona } = await sb
 		.from('persone')
-		.select('id, nome, cognome, email, telefono, stato, foto_path, ruolo_id, ruolo:ruoli(nome)')
+		.select('id, nome, cognome, email, telefono, stato, foto_path, persona_ruoli(ruolo_id, ruolo_primario, ruolo:ruoli(nome))')
 		.eq('id', pid)
 		.maybeSingle();
 	if (!persona) throw error(404, 'Persona non trovata');
+
+	// ruolo primario dalla tabella-ponte
+	const rpRow: any = (persona.persona_ruoli ?? []).find((r: any) => r.ruolo_primario) ?? (persona.persona_ruoli ?? [])[0];
+	const ruoloIdCorrente = rpRow?.ruolo_id ?? null;
+	const nomeRuolo = (Array.isArray(rpRow?.ruolo) ? rpRow?.ruolo[0]?.nome : rpRow?.ruolo?.nome) ?? null;
 
 	// foto firmata
 	let foto_url: string | null = null;
@@ -66,16 +71,14 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
 		sb.from('certificazioni').select('id, tipo, nome, numero_codice, data_scadenza, stato_manuale, documento_path').eq('persona_id', pid),
 		sb.from('permessi').select('id, codice, descrizione').order('codice'),
 		// permessi del ruolo della persona
-		persona.ruolo_id
-			? sb.from('ruolo_permessi').select('permesso_id').eq('ruolo_id', persona.ruolo_id)
+		ruoloIdCorrente
+			? sb.from('ruolo_permessi').select('permesso_id').eq('ruolo_id', ruoloIdCorrente)
 			: Promise.resolve({ data: [] as any[] }),
 		sb.from('persona_permessi').select('permesso_id, concesso').eq('persona_id', pid)
 	]);
 
-	const nomeRuolo = (persona.ruolo as any)?.nome ?? null;
-
 	return {
-		persona: { ...persona, foto_url },
+		persona: { ...persona, foto_url, ruolo_id: ruoloIdCorrente },
 		ruoli: ruoli ?? [],
 		orari: orari ?? [],
 		categorieAttive: (catAttive ?? []).map((r: any) => r.categoria).filter(Boolean),
@@ -106,11 +109,24 @@ export const actions: Actions = {
 				cognome: (f.get('cognome') as string)?.trim(),
 				email: (f.get('email') as string)?.trim() || null,
 				telefono: (f.get('telefono') as string)?.trim() || null,
-				ruolo_id: (f.get('ruolo_id') as string) || null,
 				stato: (f.get('stato') as string) || 'attivo'
 			})
 			.eq('id', params.id);
 		if (e) return fail(400, { errore: e.message });
+
+		// ruolo primario nella tabella-ponte: rimuovo i primari esistenti e reimposto
+		const ruoloId = (f.get('ruolo_id') as string) || null;
+		await locals.supabase
+			.from('persona_ruoli')
+			.delete()
+			.eq('persona_id', params.id)
+			.eq('ruolo_primario', true);
+		if (ruoloId) {
+			const { error: eR } = await locals.supabase
+				.from('persona_ruoli')
+				.upsert({ persona_id: params.id, ruolo_id: ruoloId, ruolo_primario: true });
+			if (eR) return fail(400, { errore: eR.message });
+		}
 		return { ok: true };
 	},
 

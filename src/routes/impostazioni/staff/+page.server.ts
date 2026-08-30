@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 	const [{ data: persone }, { data: ruoli }] = await Promise.all([
 		sb
 			.from('persone')
-			.select('id, nome, cognome, stato, foto_path, ruolo:ruoli(nome)')
+			.select('id, nome, cognome, stato, foto_path, persona_ruoli(ruolo_primario, ruolo:ruoli(nome))')
 			.order('cognome'),
 		sb.from('ruoli').select('id, nome').order('nome')
 	]);
@@ -27,7 +27,10 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 			sb.from('persona_mansioni').select('*', { count: 'exact', head: true }).eq('persona_id', p.id),
 			sb.from('persona_competenze').select('*', { count: 'exact', head: true }).eq('persona_id', p.id)
 		]);
-		lista.push({ ...p, foto_url, n_mansioni: nMansioni ?? 0, n_competenze: nCompetenze ?? 0 });
+		// ruolo primario dalla tabella-ponte persona_ruoli
+		const rp: any = (p.persona_ruoli ?? []).find((r: any) => r.ruolo_primario) ?? (p.persona_ruoli ?? [])[0];
+		const ruoloNome = (Array.isArray(rp?.ruolo) ? rp?.ruolo[0]?.nome : rp?.ruolo?.nome) ?? null;
+		lista.push({ ...p, foto_url, ruoloNome, n_mansioni: nMansioni ?? 0, n_competenze: nCompetenze ?? 0 });
 	}
 
 	return {
@@ -53,12 +56,20 @@ export const actions: Actions = {
 				officina_id: officinaId,
 				nome,
 				cognome,
-				ruolo_id: (f.get('ruolo_id') as string) || null,
 				stato: (f.get('stato') as string) || 'attivo'
 			})
 			.select('id')
 			.single();
 		if (error) return fail(400, { errore: error.message });
+
+		// collega il ruolo primario nella tabella-ponte persona_ruoli
+		const ruoloId = (f.get('ruolo_id') as string) || null;
+		if (ruoloId) {
+			const { error: eR } = await locals.supabase
+				.from('persona_ruoli')
+				.insert({ persona_id: data.id, ruolo_id: ruoloId, ruolo_primario: true });
+			if (eR) return fail(400, { errore: eR.message });
+		}
 		return { ok: true, nuovaPersonaId: data.id };
 	},
 

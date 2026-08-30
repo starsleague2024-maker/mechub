@@ -52,7 +52,7 @@
 					{/if}
 				</div>
 				<div class="card-nome">{p.nome} {p.cognome}</div>
-				<div class="card-ruolo">{p.ruolo?.nome ?? 'Senza ruolo'}</div>
+				<div class="card-ruolo">{p.ruoloNome ?? 'Senza ruolo'}</div>
 				<div class="card-indicatori">
 					<span class="ind">✓ {p.n_mansioni} mansioni</span>
 					<span class="ind">✓ {p.n_competenze} competenze</span>
