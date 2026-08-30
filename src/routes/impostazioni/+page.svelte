@@ -59,6 +59,17 @@
 
 	// ── Certificazioni officina: modale crea/modifica ──
 	let modalCert = $state(false);
+
+	// ── Navigazione a schede ──
+	const SCHEDE = [
+		{ id: 'officina', label: 'Officina', icona: '⬡' },
+		{ id: 'orari', label: 'Orari & Chiusure', icona: '◷' },
+		{ id: 'tratti', label: 'Cosa tratti', icona: '⬒' },
+		{ id: 'competenze', label: 'Competenze', icona: '☰' },
+		{ id: 'certificazioni', label: 'Certificazioni', icona: '▤' },
+		{ id: 'staff', label: 'Ruoli & Staff', icona: '◑' }
+	];
+	let schedaAttiva = $state('officina');
 	let certCorrente = $state<any>(null);
 
 	// ── Elenco unico filtrabile (staff + officina) ──
@@ -210,14 +221,17 @@
 		<input type="hidden" name="attiva" value={catAttiva} />
 	</form>
 
-	<div class="sezioni">
-		<!-- ─── Accesso Ruoli & Staff ─── -->
-		<!-- ─── Ruoli & Staff ─── -->
-		<Sezione titolo="Ruoli & Staff" descrizione="Persone, ruoli, orari, competenze, mansioni e permessi" aperta={true}>
-			<p class="muted small mb-2">Gestisci le persone dell'officina: dati, ruolo, orari, veicoli, competenze, mansioni, certificazioni e permessi.</p>
-			<a href="/impostazioni/staff" class="btn btn-accent">Apri Ruoli &amp; Staff →</a>
-		</Sezione>
+	<div class="tab-bar">
+		{#each SCHEDE as s}
+			<button class="tab" class:on={schedaAttiva === s.id} onclick={() => (schedaAttiva = s.id)}>
+				<span class="tab-ico">{s.icona}</span>
+				<span class="tab-lab">{s.label}</span>
+			</button>
+		{/each}
+	</div>
 
+	<div class="sezioni">
+		{#if schedaAttiva === 'officina'}
 		<!-- ─── Profilo officina ─── -->
 		<Sezione titolo="Officina" descrizione="Anagrafica, contatti, social e fatturazione" aperta={true}>
 			<div class="profilo">
@@ -316,9 +330,11 @@
 				</div>
 			</div>
 		</Sezione>
+		{/if}
 
+		{#if schedaAttiva === 'orari'}
 		<!-- ─── Orari di apertura officina ─── -->
-		<Sezione titolo="Orari di apertura" descrizione="Orari settimanali dell'officina">
+		<Sezione titolo="Orari di apertura" descrizione="Orari settimanali dell'officina" aperta={true}>
 			<p class="muted small mb-2">
 				Imposta gli orari di apertura per ogni giorno. Questi orari faranno da base
 				per lo staff: quando crei una persona potrai copiarli e modificarli.
@@ -331,9 +347,19 @@
 				{:else if orariStato === 'error'}<span class="small" style="color:#c0392b">errore</span>{/if}
 			</div>
 		</Sezione>
+		{/if}
 
+		{#if schedaAttiva === 'staff'}
+		<!-- ─── Ruoli & Staff ─── -->
+		<Sezione titolo="Ruoli & Staff" descrizione="Gestione del personale" aperta={true}>
+			<p class="muted small mb-2">Gestisci le persone dell'officina: dati, ruolo, orari, veicoli, competenze, mansioni, certificazioni e permessi.</p>
+			<a href="/impostazioni/staff" class="btn btn-accent">Apri Ruoli &amp; Staff →</a>
+		</Sezione>
+		{/if}
+
+		{#if schedaAttiva === 'tratti'}
 		<!-- ─── Veicoli trattati ─── -->
-		<Sezione titolo="Veicoli trattati" descrizione="Categorie di veicolo" badge={categorieAttiveCount}>
+		<Sezione titolo="Veicoli trattati" descrizione="Categorie di veicolo" badge={categorieAttiveCount} aperta={true}>
 			<p class="muted small mb-2">Attiva le categorie di veicolo che l'officina tratta. Utile al Planner per assegnare le risorse giuste.</p>
 			<ul class="alim-lista">
 				{#each data.categorie as c}
@@ -379,7 +405,9 @@
 				{/each}
 			</ul>
 		</Sezione>
+		{/if}
 
+		{#if schedaAttiva === 'competenze'}
 		<!-- ─── Competenze officina (ALBERO) ─── -->
 		<Sezione titolo="Competenze e lavorazioni dell'officina" descrizione="Cosa fa questa officina" badge={competenzeAttiveCount} aperta={true}>
 			<p class="muted small mb-2">
@@ -399,14 +427,15 @@
 				<AlberoCompetenze competenze={data.competenze} {attive} ontoggle={onToggleCompetenza} />
 			{/if}
 		</Sezione>
+		{/if}
 
-		<!-- (La gestione dei ruoli è ora dentro Ruoli & Staff) -->
-
+		{#if schedaAttiva === 'certificazioni'}
 		<!-- ─── Certificazioni e abilitazioni (elenco unico filtrabile) ─── -->
 		<Sezione
 			titolo="Certificazioni e abilitazioni"
 			descrizione="Staff e officina, in un unico elenco"
 			badge={data.certificazioniTutte?.length ?? 0}
+			aperta={true}
 		>
 			<p class="muted small mb-2">
 				Elenco unico di tutte le certificazioni e abilitazioni: quelle dell'officina e quelle personali
@@ -470,6 +499,7 @@
 			{/if}
 			<button class="btn btn-accent btn-sm" onclick={apriNuovaCert}>+ Aggiungi certificazione officina</button>
 		</Sezione>
+		{/if}
 	</div>
 
 	<Modal titolo={certCorrente ? 'Modifica certificazione' : 'Nuova certificazione'} bind:aperto={modalCert}>
@@ -735,5 +765,52 @@
 	.seg-btn.on {
 		background: var(--grafite-900);
 		color: #fff;
+	}
+	.tab-bar {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px;
+		margin-bottom: 20px;
+		border-bottom: 2px solid var(--bordo, #e2e5ea);
+		padding-bottom: 0;
+	}
+	.tab {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+		padding: 10px 16px;
+		background: none;
+		border: none;
+		border-bottom: 2px solid transparent;
+		margin-bottom: -2px;
+		cursor: pointer;
+		font-size: 14px;
+		font-weight: 500;
+		color: var(--testo-tenue, #7a828e);
+		transition: color 0.12s, border-color 0.12s;
+		white-space: nowrap;
+	}
+	.tab:hover {
+		color: var(--testo, #2a2d33);
+	}
+	.tab.on {
+		color: var(--testo, #2a2d33);
+		border-bottom-color: var(--cantiere, #f5b301);
+		font-weight: 600;
+	}
+	.tab-ico {
+		font-size: 16px;
+		opacity: 0.8;
+	}
+	@media (max-width: 640px) {
+		.tab-lab {
+			display: none;
+		}
+		.tab {
+			padding: 10px 14px;
+		}
+		.tab-ico {
+			font-size: 20px;
+		}
 	}
 </style>
