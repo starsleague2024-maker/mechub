@@ -5,6 +5,7 @@
 	let { data, form } = $props();
 
 	let modalNuovo = $state(false);
+	let ruoloScelto = $state('');
 
 	const STATO_LABEL: Record<string, string> = {
 		attivo: 'Attivo',
@@ -63,27 +64,6 @@
 	</div>
 {/if}
 
-<div class="ruoli-box">
-	<div class="ruoli-tit">Ruoli disponibili</div>
-	<p class="muted small mb-2">I ruoli assegnabili alle persone. I quattro base sono già pronti (Titolare, Desk, Capofficina, Meccanico); aggiungine altri se la tua officina ne ha bisogno.</p>
-	<div class="ruoli-lista">
-		{#each data.ruoli as r}
-			<span class="ruolo-chip">
-				{r.nome}
-				<form method="POST" action="?/eliminaRuolo" use:enhance class="inline-x">
-					<input type="hidden" name="id" value={r.id} />
-					<button type="submit" aria-label="Elimina">×</button>
-				</form>
-			</span>
-		{/each}
-	</div>
-	<form method="POST" action="?/creaRuolo" use:enhance class="flex gap-1 mt-2" style="max-width:420px">
-		<input type="hidden" name="officina_id" value={data.officinaId} />
-		<input class="input" name="nome" placeholder="Nuovo ruolo…" required />
-		<button class="btn btn-accent" type="submit">+ Aggiungi ruolo</button>
-	</form>
-</div>
-
 <Modal aperto={modalNuovo} titolo="Nuova persona" onchiudi={() => (modalNuovo = false)}>
 	<form
 		method="POST"
@@ -105,12 +85,16 @@
 		</div>
 		<div class="field">
 			<label for="r">Ruolo principale</label>
-			<select id="r" class="select" name="ruolo_id">
+			<select id="r" class="select" name="ruolo_id" bind:value={ruoloScelto}>
 				<option value="">— nessuno —</option>
 				{#each data.ruoli as r}
 					<option value={r.id}>{r.nome}</option>
 				{/each}
+				<option value="__nuovo__">+ Nuovo ruolo…</option>
 			</select>
+			{#if ruoloScelto === '__nuovo__'}
+				<input class="input mt-1" name="nuovo_ruolo" placeholder="Nome del nuovo ruolo" />
+			{/if}
 		</div>
 		<div class="field">
 			<label for="s">Stato</label>
@@ -231,49 +215,5 @@
 		border: 1px dashed var(--bordo, #e2e5ea);
 		border-radius: var(--r, 10px);
 		color: var(--testo-tenue, #7a828e);
-	}
-	.ruoli-box {
-		margin-top: 24px;
-		padding: 18px;
-		background: var(--nebbia-50, #f6f7f9);
-		border: 1px solid var(--bordo, #e2e5ea);
-		border-radius: var(--r, 10px);
-	}
-	.ruoli-tit {
-		font-family: var(--display);
-		font-weight: 600;
-		font-size: 15px;
-		margin-bottom: 4px;
-	}
-	.ruoli-lista {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px;
-	}
-	.ruolo-chip {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
-		padding: 5px 12px;
-		background: var(--carta, #fff);
-		border: 1px solid var(--bordo, #e2e5ea);
-		border-radius: 999px;
-		font-size: 13px;
-		font-weight: 500;
-	}
-	.ruolo-chip :global(.inline-x) {
-		display: inline;
-	}
-	.ruolo-chip :global(.inline-x button) {
-		background: none;
-		border: none;
-		cursor: pointer;
-		color: var(--testo-tenue, #7a828e);
-		font-size: 15px;
-		padding: 0;
-		line-height: 1;
-	}
-	.ruolo-chip :global(.inline-x button:hover) {
-		color: var(--rosso, #c0392b);
 	}
 </style>

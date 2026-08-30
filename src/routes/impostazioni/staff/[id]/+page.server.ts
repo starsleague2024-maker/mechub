@@ -115,7 +115,24 @@ export const actions: Actions = {
 		if (e) return fail(400, { errore: e.message });
 
 		// ruolo primario nella tabella-ponte: rimuovo i primari esistenti e reimposto
-		const ruoloId = (f.get('ruolo_id') as string) || null;
+		let ruoloId = (f.get('ruolo_id') as string) || null;
+		const nuovoRuolo = (f.get('nuovo_ruolo') as string)?.trim();
+		if (ruoloId === '__nuovo__') {
+			if (!nuovoRuolo) {
+				ruoloId = null;
+			} else {
+				// serve l'officina della persona
+				const { data: p } = await locals.supabase
+					.from('persone').select('officina_id').eq('id', params.id).maybeSingle();
+				const { data: r, error: eN } = await locals.supabase
+					.from('ruoli')
+					.insert({ officina_id: p?.officina_id, nome: nuovoRuolo })
+					.select('id')
+					.single();
+				if (eN) return fail(400, { errore: eN.message });
+				ruoloId = r.id;
+			}
+		}
 		await locals.supabase
 			.from('persona_ruoli')
 			.delete()

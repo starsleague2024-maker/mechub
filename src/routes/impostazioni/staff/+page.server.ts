@@ -63,7 +63,22 @@ export const actions: Actions = {
 		if (error) return fail(400, { errore: error.message });
 
 		// collega il ruolo primario nella tabella-ponte persona_ruoli
-		const ruoloId = (f.get('ruolo_id') as string) || null;
+		let ruoloId = (f.get('ruolo_id') as string) || null;
+		const nuovoRuolo = (f.get('nuovo_ruolo') as string)?.trim();
+		// se l'utente ha scelto "+ Nuovo ruolo…", crealo al volo
+		if (ruoloId === '__nuovo__') {
+			if (!nuovoRuolo) {
+				ruoloId = null;
+			} else {
+				const { data: r, error: eR } = await locals.supabase
+					.from('ruoli')
+					.insert({ officina_id: officinaId, nome: nuovoRuolo })
+					.select('id')
+					.single();
+				if (eR) return fail(400, { errore: eR.message });
+				ruoloId = r.id;
+			}
+		}
 		if (ruoloId) {
 			const { error: eR } = await locals.supabase
 				.from('persona_ruoli')

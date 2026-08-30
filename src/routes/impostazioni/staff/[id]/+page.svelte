@@ -9,6 +9,7 @@
 
 	const STATO_LABEL: Record<string, string> = { attivo: 'Attivo', in_prova: 'In prova', cessato: 'Cessato' };
 	const LIVELLI = ['—', 'Base', 'Intermedio', 'Avanzato', 'Esperto'];
+	let ruoloSchedaScelto = $state(data.persona.ruolo_id ?? '');
 
 	function iniziali(nome: string, cognome: string) {
 		return `${(nome?.[0] ?? '').toUpperCase()}${(cognome?.[0] ?? '').toUpperCase()}`;
@@ -149,12 +150,16 @@
 				<div class="griglia g-2">
 					<div class="field">
 						<label for="r">Ruolo principale</label>
-						<select id="r" class="select" name="ruolo_id">
+						<select id="r" class="select" name="ruolo_id" bind:value={ruoloSchedaScelto}>
 							<option value="">— nessuno —</option>
 							{#each data.ruoli as r}
 								<option value={r.id} selected={r.id === data.persona.ruolo_id}>{r.nome}</option>
 							{/each}
+							<option value="__nuovo__">+ Nuovo ruolo…</option>
 						</select>
+						{#if ruoloSchedaScelto === '__nuovo__'}
+							<input class="input mt-1" name="nuovo_ruolo" placeholder="Nome del nuovo ruolo" />
+						{/if}
 					</div>
 					<div class="field">
 						<label for="s">Stato</label>

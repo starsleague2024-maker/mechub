@@ -212,14 +212,11 @@
 
 	<div class="sezioni">
 		<!-- ─── Accesso Ruoli & Staff ─── -->
-		<a href="/impostazioni/staff" class="staff-link">
-			<span class="staff-link-ico">◑</span>
-			<span class="staff-link-testo">
-				<span class="staff-link-tit">Ruoli & Staff</span>
-				<span class="staff-link-sub">Persone, ruoli, orari, competenze, mansioni e permessi</span>
-			</span>
-			<span class="staff-link-freccia">→</span>
-		</a>
+		<!-- ─── Ruoli & Staff ─── -->
+		<Sezione titolo="Ruoli & Staff" descrizione="Persone, ruoli, orari, competenze, mansioni e permessi" aperta={true}>
+			<p class="muted small mb-2">Gestisci le persone dell'officina: dati, ruolo, orari, veicoli, competenze, mansioni, certificazioni e permessi.</p>
+			<a href="/impostazioni/staff" class="btn btn-accent">Apri Ruoli &amp; Staff →</a>
+		</Sezione>
 
 		<!-- ─── Profilo officina ─── -->
 		<Sezione titolo="Officina" descrizione="Anagrafica, contatti, social e fatturazione" aperta={true}>
@@ -566,39 +563,6 @@
 	.hidden-form {
 		display: none;
 	}
-	.lista-el {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-	}
-	.lista-el li {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 7px 10px;
-		background: var(--nebbia-50);
-		border-radius: var(--r);
-		font-size: 13.5px;
-		font-weight: 500;
-	}
-	.inline-x {
-		display: inline;
-	}
-	.inline-x button {
-		background: none;
-		border: none;
-		color: var(--acciaio-400);
-		cursor: pointer;
-		font-size: 15px;
-		line-height: 1;
-		padding: 0 0 0 4px;
-	}
-	.inline-x button:hover {
-		color: var(--rosso);
-	}
 	.alim-lista {
 		list-style: none;
 		margin: 0;
@@ -771,42 +735,5 @@
 	.seg-btn.on {
 		background: var(--grafite-900);
 		color: #fff;
-	}
-	.staff-link {
-		display: flex;
-		align-items: center;
-		gap: 14px;
-		padding: 14px 18px;
-		background: var(--carta, #fff);
-		border: 1px solid var(--bordo, #e2e5ea);
-		border-radius: var(--r, 10px);
-		text-decoration: none;
-		color: inherit;
-		transition: border-color 0.12s;
-	}
-	.staff-link:hover {
-		border-color: var(--cantiere, #f5b301);
-	}
-	.staff-link-ico {
-		font-size: 22px;
-		color: var(--cantiere-scuro, #b5850a);
-	}
-	.staff-link-testo {
-		display: flex;
-		flex-direction: column;
-		flex: 1;
-	}
-	.staff-link-tit {
-		font-family: var(--display);
-		font-weight: 600;
-		font-size: 16px;
-	}
-	.staff-link-sub {
-		font-size: 13px;
-		color: var(--testo-tenue, #7a828e);
-	}
-	.staff-link-freccia {
-		font-size: 20px;
-		color: var(--testo-tenue, #7a828e);
 	}
 </style>
