@@ -232,6 +232,7 @@
 										<input type="checkbox" checked={!!poss} onchange={(e) => toggleComp(nodo.id, e.currentTarget.checked)} />
 										<span>{nodo.nome}</span>
 									</label>
+									{#if nodo.descrizione}<span class="comp-desc" title={nodo.descrizione}>ⓘ {nodo.descrizione}</span>{/if}
 									{#if poss}
 										<form method="POST" action="?/livelloCompetenza" use:enhance class="inline">
 											<input type="hidden" name="competenza_id" value={nodo.id} />
@@ -252,6 +253,7 @@
 											<input type="checkbox" checked={!!poss2} onchange={(e) => toggleComp(sotto.id, e.currentTarget.checked)} />
 											<span>{sotto.nome}</span>
 										</label>
+										{#if sotto.descrizione}<span class="comp-desc" title={sotto.descrizione}>ⓘ {sotto.descrizione}</span>{/if}
 										{#if poss2}
 											<form method="POST" action="?/livelloCompetenza" use:enhance class="inline">
 												<input type="hidden" name="competenza_id" value={sotto.id} />
@@ -481,6 +483,12 @@
 		gap: 7px;
 		cursor: pointer;
 		font-size: 14px;
+	}
+	.comp-desc {
+		font-size: 11.5px;
+		color: var(--testo-tenue, #7a828e);
+		font-style: italic;
+		margin-left: 8px;
 	}
 	.select-sm { padding: 3px 6px; font-size: 12px; }
 	/* Certificazioni */

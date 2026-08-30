@@ -403,28 +403,7 @@
 			{/if}
 		</Sezione>
 
-		<!-- ─── Ruoli disponibili (catalogo ruoli-tipo) ─── -->
-		<Sezione titolo="Ruoli disponibili" descrizione="Elenco dei ruoli assegnabili alle persone" badge={data.ruoli.length}>
-			<p class="muted small mb-2">Questi sono i ruoli che puoi assegnare alle persone in <a href="/impostazioni/staff">Ruoli &amp; Staff</a>. I quattro base sono già pronti (Titolare, Desk, Capofficina, Meccanico). Aggiungine altri se la tua officina ne ha bisogno.</p>
-			{#if data.ruoli.length > 0}
-				<ul class="lista-el mb-2">
-					{#each data.ruoli as r}
-						<li>
-							<span>{r.nome}</span>
-							<form method="POST" action="?/eliminaRuolo" use:enhance class="inline-x">
-								<input type="hidden" name="id" value={r.id} />
-								<button type="submit" aria-label="Elimina">×</button>
-							</form>
-						</li>
-					{/each}
-				</ul>
-			{/if}
-			<form method="POST" action="?/creaRuolo" use:enhance class="flex gap-1" style="max-width:420px">
-				<input type="hidden" name="officina_id" value={data.officina.id} />
-				<input class="input" name="nome" placeholder="Altro ruolo…" required />
-				<button class="btn btn-accent" type="submit">+ Aggiungi</button>
-			</form>
-		</Sezione>
+		<!-- (La gestione dei ruoli è ora dentro Ruoli & Staff) -->
 
 		<!-- ─── Certificazioni e abilitazioni (elenco unico filtrabile) ─── -->
 		<Sezione

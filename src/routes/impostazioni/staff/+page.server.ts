@@ -81,5 +81,24 @@ export const actions: Actions = {
 			.eq('id', f.get('id') as string);
 		if (error) return fail(400, { errore: error.message });
 		return { ok: true };
+	},
+
+	creaRuolo: async ({ request, locals }) => {
+		const f = await request.formData();
+		const officinaId = f.get('officina_id') as string;
+		const nome = (f.get('nome') as string)?.trim();
+		if (!nome) return fail(400, { errore: 'Il nome del ruolo è obbligatorio.' });
+		const { error } = await locals.supabase
+			.from('ruoli')
+			.insert({ officina_id: officinaId, nome });
+		if (error) return fail(400, { errore: error.message });
+		return { ok: true };
+	},
+
+	eliminaRuolo: async ({ request, locals }) => {
+		const f = await request.formData();
+		const { error } = await locals.supabase.from('ruoli').delete().eq('id', f.get('id') as string);
+		if (error) return fail(400, { errore: error.message });
+		return { ok: true };
 	}
 };

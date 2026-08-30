@@ -64,7 +64,7 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
 		// alimentazioni ATTIVE dell'officina
 		sb.from('officina_alimentazioni').select('alimentazione, attiva').eq('attiva', true),
 		sb.from('persona_alimentazioni').select('alimentazione').eq('persona_id', pid),
-		sb.from('competenze').select('id, nome, competenza_padre_id, selezionabile, ordine').eq('attiva', true).order('ordine'),
+		sb.from('competenze').select('id, nome, competenza_padre_id, selezionabile, ordine, descrizione').eq('attiva', true).order('ordine'),
 		sb.from('persona_competenze').select('id, competenza_id, livello').eq('persona_id', pid),
 		sb.from('mansioni').select('id, nome, gruppo, ordine').eq('attiva', true).order('ordine'),
 		sb.from('persona_mansioni').select('mansione_id').eq('persona_id', pid),
